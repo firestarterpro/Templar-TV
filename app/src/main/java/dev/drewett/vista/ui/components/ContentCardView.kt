@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.components
+package com.firestarterpro.templartv.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import dev.drewett.vista.domain.ContentCard
+import com.firestarterpro.templartv.domain.ContentCard
 import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.Glow

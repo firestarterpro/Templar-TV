@@ -1,4 +1,4 @@
-package dev.drewett.vista.data.favourites
+package com.firestarterpro.templartv.data.favourites
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit

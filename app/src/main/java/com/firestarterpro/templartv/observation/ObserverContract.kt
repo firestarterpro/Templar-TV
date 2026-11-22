@@ -72,9 +72,9 @@ interface ObserverContract {
 
     /** Observation result */
     sealed class ObservationResult {
-        object Success(val title: String, val confidence: MatchConfidence) : ObservationResult()
-        object UnknownSession(val durationMillis: Long, val evidence: List<String>) : ObservationResult()
-        object UserCancelled
-        object NoActivePlayback
+        data class Success(val title: String, val confidence: MatchConfidence) : ObservationResult()
+        data class UnknownSession(val durationMillis: Long, val evidence: List<String>) : ObservationResult()
+        object UserCancelled : ObservationResult()
+        object NoActivePlayback : ObservationResult()
     }
 }

@@ -1,4 +1,4 @@
-package dev.drewett.vista.domain
+package com.firestarterpro.templartv.domain
 
 import android.content.ComponentName
 import android.content.pm.ApplicationInfo

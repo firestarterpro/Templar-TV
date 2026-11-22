@@ -2,9 +2,13 @@ package com.firestarterpro.templartv.data.watchhistory
 
 import android.app.Application
 import androidx.lifecycle.LiveData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class WatchHistoryRepository(application: Application) {
     private val database = WatchHistoryRoomDatabase.getDatabase(application)
+    private val scope = CoroutineScope(Dispatchers.IO)
     private val allEntriesLiveData: LiveData<List<WatchHistoryEntry>> = database.watchHistoryDao().getAll()
 
     fun getAll(): LiveData<List<WatchHistoryEntry>> {
@@ -12,15 +16,15 @@ class WatchHistoryRepository(application: Application) {
     }
 
     fun insert(entry: WatchHistoryEntry) {
-        database.executeAsync { database.watchHistoryDao().insert(entry) }
+        scope.launch { database.watchHistoryDao().insert(entry) }
     }
 
     fun insertAll(vararg entries: WatchHistoryEntry) {
-        database.executeAsync { database.watchHistoryDao().insertAll(entries) }
+        scope.launch { database.watchHistoryDao().insertAll(*entries) }
     }
 
     fun clearAll() {
-        database.executeAsync { database.watchHistoryDao().clearAll() }
+        scope.launch { database.watchHistoryDao().clearAll() }
     }
 
     fun getByProvider(provider: String): LiveData<List<WatchHistoryEntry>> {

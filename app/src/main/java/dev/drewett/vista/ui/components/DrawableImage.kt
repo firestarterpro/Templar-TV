@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.components
+package com.firestarterpro.templartv.ui.components
 
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable

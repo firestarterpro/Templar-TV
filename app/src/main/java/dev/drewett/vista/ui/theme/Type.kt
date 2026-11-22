@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.theme
+package com.firestarterpro.templartv.ui.theme
 
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight

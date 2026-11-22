@@ -1,4 +1,4 @@
-package dev.drewett.vista.data.channels
+package com.firestarterpro.templartv.data.channels
 
 import android.content.Context
 import android.content.Intent
@@ -6,7 +6,7 @@ import android.database.Cursor
 import androidx.tvprovider.media.tv.PreviewProgram
 import androidx.tvprovider.media.tv.TvContractCompat
 import androidx.tvprovider.media.tv.WatchNextProgram
-import dev.drewett.vista.domain.ContentCard
+import com.firestarterpro.templartv.domain.ContentCard
 
 /**
  * Reads other apps' published TV content via the TvProvider (requires READ_TV_LISTINGS, granted

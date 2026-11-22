@@ -1,4 +1,4 @@
-package dev.drewett.vista.data.usage
+package com.firestarterpro.templartv.data.usage
 
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager

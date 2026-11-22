@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.components
+package com.firestarterpro.templartv.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.aspectRatio
@@ -13,7 +13,7 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.Glow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
-import dev.drewett.vista.domain.AppEntry
+import com.firestarterpro.templartv.domain.AppEntry
 
 /** Google-TV-style circular app icon for the home app rows. */
 @Composable

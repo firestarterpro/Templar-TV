@@ -1,6 +1,6 @@
-package dev.drewett.vista.data.notifications
+package com.firestarterpro.templartv.data.notifications
 
-import dev.drewett.vista.domain.NotificationItem
+import com.firestarterpro.templartv.domain.NotificationItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 

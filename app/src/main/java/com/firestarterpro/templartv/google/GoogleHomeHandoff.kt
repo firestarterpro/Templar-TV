@@ -1,5 +1,8 @@
 package com.firestarterpro.templartv.google
 
+import android.content.Context
+import android.content.Intent
+
 /**
  * Google Home and system navigation foundations for Templar TV.
  * 
@@ -28,20 +31,20 @@ package com.firestarterpro.templartv.google
 object GoogleHomeHandoff {
 
     /** Open Google Home app if installed */
-    fun openGoogleHome(context: android.content.Context) {
+    fun openGoogleHome(context: Context) {
         // Discover the Google Home activity safely at runtime
-        val intent = android.content.Intent("com.google.android.gms.actions.NOTE_PAIRED_DEVICE_ACTION")
+        val intent = Intent("com.google.android.gms.actions.NOTE_PAIRED_DEVICE_ACTION")
             .setPackage("com.google.android.apps.home")
         if (intent.resolveActivity(context.packageManager) != null) {
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
         }
     }
 
     /** Open Android system settings */
-    fun openSettings(context: android.content.Context) {
-        val intent = android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    fun openSettings(context: Context) {
+        val intent = Intent(android.provider.Settings.ACTION_SETTINGS)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
 
