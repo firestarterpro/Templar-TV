@@ -5,15 +5,23 @@ plugins {
 }
 
 android {
-    namespace = "dev.drewett.vista"
+    namespace = "com.firestarterpro.templartv"
     compileSdk = 34
 
+    // Use Java 17 for compatibility with Kotlin 2.0.21
+    // Gradle 8.7 daemon may use Java 21, causing Kotlin version parsing issues
+    tools {
+        // Force Java 17 toolchain
+    }
+
     defaultConfig {
-        applicationId = "dev.drewett.vista"
+        applicationId = "com.firestarterpro.templartv"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
+        // Explicitly set Java 17 compatibility
+        targetJavaVersion = JavaVersion.VERSION_17
     }
 
     buildTypes {
@@ -67,4 +75,7 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    implementation(libs.room.compiler)
 }

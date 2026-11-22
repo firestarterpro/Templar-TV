@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui
+package com.firestarterpro.templartv.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,9 +16,9 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
-import dev.drewett.vista.domain.ThemeMode
-import dev.drewett.vista.ui.home.HomeScreen
-import dev.drewett.vista.ui.quicksettings.QuickSettingsPanel
+import com.firestarterpro.templartv.domain.ThemeMode
+import com.firestarterpro.templartv.ui.home.HomeScreen
+import com.firestarterpro.templartv.ui.quicksettings.QuickSettingsPanel
 
 @Composable
 fun VistaRoot(themeMode: ThemeMode, onCycleTheme: () -> Unit) {

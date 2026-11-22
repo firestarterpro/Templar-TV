@@ -1,5 +1,5 @@
 [versions]
-agp = "8.5.2"
+agp = "8.2.0"
 kotlin = "2.0.21"
 coreKtx = "1.13.1"
 activityCompose = "1.9.3"
@@ -11,6 +11,18 @@ coil = "2.7.0"
 palette = "1.0.0"
 datastore = "1.1.1"
 coroutines = "1.8.1"
+
+flagWatchHistory = "1.0.0"
+flagMediaSessionObservation = "1.0.0"
+flagJellyfin = "1.0.0"
+flagProviderRows = "1.0.0"
+flagPreviewAndUpcoming = "1.0.0"
+flagOcrObservation = "1.0.0"
+flagFocusedTileObservation = "1.0.0"
+flagCustomVoiceRouting = "1.0.0"
+flagLowConfidenceReview = "1.0.0"
+flagGoogleHomeHandoff = "1.0.0"
+flagDiagnostics = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
