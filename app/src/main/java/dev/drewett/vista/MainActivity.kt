@@ -1,4 +1,4 @@
-package dev.drewett.vista
+package com.firestarterpro.templartv
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,12 +9,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.drewett.vista.domain.ThemeMode
-import dev.drewett.vista.service.VistaForeground
-import dev.drewett.vista.ui.VistaRoot
-import dev.drewett.vista.ui.VistaSignals
-import dev.drewett.vista.ui.home.SettingsViewModel
-import dev.drewett.vista.ui.theme.VistaTheme
+import com.firestarterpro.templartv.domain.ThemeMode
+import com.firestarterpro.templartv.service.VistaForeground
+import com.firestarterpro.templartv.ui.VistaRoot
+import com.firestarterpro.templartv.ui.VistaSignals
+import com.firestarterpro.templartv.ui.home.SettingsViewModel
+import com.firestarterpro.templartv.ui.theme.VistaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

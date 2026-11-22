@@ -1,4 +1,4 @@
-package dev.drewett.vista.domain
+package com.firestarterpro.templartv.domain
 
 enum class ThemeMode(val label: String) {
     AUTO("Auto"),

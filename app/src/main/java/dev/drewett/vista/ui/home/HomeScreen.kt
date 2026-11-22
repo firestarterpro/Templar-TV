@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.home
+package com.firestarterpro.templartv.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -16,12 +16,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import dev.drewett.vista.ui.VistaSignals
-import dev.drewett.vista.ui.apps.AppsScreen
-import dev.drewett.vista.ui.components.AppContextMenu
-import dev.drewett.vista.ui.content.ContentGrid
-import dev.drewett.vista.ui.content.LibraryScreen
-import dev.drewett.vista.ui.content.SearchScreen
+import com.firestarterpro.templartv.ui.VistaSignals
+import com.firestarterpro.templartv.ui.apps.AppsScreen
+import com.firestarterpro.templartv.ui.components.AppContextMenu
+import com.firestarterpro.templartv.ui.content.ContentGrid
+import com.firestarterpro.templartv.ui.content.LibraryScreen
+import com.firestarterpro.templartv.ui.content.SearchScreen
 
 @Composable
 fun HomeScreen(
@@ -38,7 +38,7 @@ fun HomeScreen(
 
     var tab by remember { mutableStateOf(VistaTab.FOR_YOU) }
     var searchOpen by remember { mutableStateOf(false) }
-    var menuApp by remember { mutableStateOf<dev.drewett.vista.domain.AppEntry?>(null) }
+    var menuApp by remember { mutableStateOf<com.firestarterpro.templartv.domain.AppEntry?>(null) }
     val topBarFocus = remember { FocusRequester() }
     val contentFocus = remember { FocusRequester() }
     val resetSignal by VistaSignals.reset.collectAsStateWithLifecycle()

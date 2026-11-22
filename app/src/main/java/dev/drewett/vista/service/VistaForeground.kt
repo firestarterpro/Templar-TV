@@ -1,4 +1,4 @@
-package dev.drewett.vista.service
+package com.firestarterpro.templartv.service
 
 /** Tracks whether Vista itself is in the foreground, so we only overlay notifications over OTHER apps. */
 object VistaForeground {

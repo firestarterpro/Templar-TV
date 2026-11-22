@@ -1,10 +1,10 @@
-package dev.drewett.vista.data.system
+package com.firestarterpro.templartv.data.system
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import dev.drewett.vista.domain.ThemeMode
+import com.firestarterpro.templartv.domain.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

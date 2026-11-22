@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.quicksettings
+package com.firestarterpro.templartv.ui.quicksettings
 
 import android.content.Intent
 import android.provider.Settings
@@ -51,9 +51,9 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
-import dev.drewett.vista.R
-import dev.drewett.vista.data.notifications.NotificationRepository
-import dev.drewett.vista.domain.ThemeMode
+import com.firestarterpro.templartv.R
+import com.firestarterpro.templartv.data.notifications.NotificationRepository
+import com.firestarterpro.templartv.domain.ThemeMode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

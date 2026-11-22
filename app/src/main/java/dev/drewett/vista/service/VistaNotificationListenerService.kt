@@ -1,10 +1,10 @@
-package dev.drewett.vista.service
+package com.firestarterpro.templartv.service
 
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import dev.drewett.vista.data.notifications.NotificationRepository
-import dev.drewett.vista.domain.NotificationItem
+import com.firestarterpro.templartv.data.notifications.NotificationRepository
+import com.firestarterpro.templartv.domain.NotificationItem
 
 /**
  * Captures live system notifications for the quick-settings panel. Enabled via adb

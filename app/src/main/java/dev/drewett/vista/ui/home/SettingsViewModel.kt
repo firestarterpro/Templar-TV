@@ -1,10 +1,10 @@
-package dev.drewett.vista.ui.home
+package com.firestarterpro.templartv.ui.home
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import dev.drewett.vista.data.system.SettingsRepository
-import dev.drewett.vista.domain.ThemeMode
+import com.firestarterpro.templartv.data.system.SettingsRepository
+import com.firestarterpro.templartv.domain.ThemeMode
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
