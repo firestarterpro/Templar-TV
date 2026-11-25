@@ -20,7 +20,8 @@ Top fixes, in order of impact:
 2. **Row actions can't be reached.** Row titles are plain text today and can't take focus [E: `RowHeader` in `HomeTab.kt`]. "Long-press a row title" won't work with a D-pad. Put row actions in the tile menu ("Edit this row…") and in the Row Manager. Don't make titles focusable, because that doubles the presses per row. (~15%)
 3. **Focus rules after edits are missing.** After Remove, Hide, Move, or a background data refresh, focus must land somewhere predictable. Rules are in section 3.4. Without them, D-pad users get "lost" focus or a jumping screen, which is the most common way TV launchers feel broken. (~15%)
 4. **Too many tile actions.** Section 9 lists 8 actions per tile. Show at most 5, chosen by where the tile came from, with the rest under "More". Merge "Remove" and "Hide" into one "Remove" that does the right thing and is undoable. (~10%)
-5. **One menu, not two.** Templar has an in-app quick-settings panel on the Menu key [E: `VistaRoot.kt`] and the plan adds a quick menu. Fold quick settings into the quick menu as one section so there is one menu to learn. (~10%, see question 2)
+5. **One menu, not two.** Templar has an in-app quick-settings panel on the Menu key [E: `VistaRoot.kt`] and the plan adds a quick menu. Fold quick settings into the quick menu as one section so there is one menu to learn. (~10%, decided, see section 9)
+7. **Choice of home views** (owner ask): Rows, Columns, Rail + grid, Spotlight, Wall and List, all reading the same shelves. See section 10. Full settings map in section 11.
 6. **Google Home gets a fixed, non-hideable slot** in the quick menu and a top-bar icon on the home screen, so it is never more than 3 presses away inside Templar, plus long-press Home from anywhere. (~10%, protects the hard rule)
 
 Decisions I made without asking, because the plan or context already answers them:
@@ -172,7 +173,7 @@ Never use colour alone for these; use shape and a text label in the focused-tile
   3. Favourite Shows (first 5, then "All favourites")
   4. Pinned apps
   5. Voice search
-  6. Quick settings (folded in from today's panel, see question 2)
+  6. Quick settings (folded in from today's panel, see section 9)
   7. **Pinned footer, can't be hidden**: Google Home · Google TV Home · Templar Home
 - The footer is always the last items, so "Up from the top" or "Down to the bottom" reaches Google Home in a fixed number of presses. Up from item 1 wraps to the footer (the one place wrapping helps: it makes Google Home 2 presses away).
 
@@ -210,7 +211,7 @@ Design notes for the companion:
 | Star button → quick menu footer | Anywhere | ~2 | Default setting (quick menu). 1 press if the owner points the star back at Google Home. See 6.1. |
 | Top-bar Google Home icon | Templar home | ~3 | **New in this review**; add to the plan. |
 | Quick menu footer | Anywhere the quick menu opens | ~2 | Pinned, can't be hidden. |
-| Quick settings tile | Templar | ~3 | Plan already has it; becomes part of the quick menu if question 2 is yes. |
+| Quick settings tile | Templar | ~3 | Plan already has it; now part of the quick menu (section 9). |
 
 Also from the code [E]: the accessibility service consumes `KEYCODE_SETTINGS` today, and `VistaRoot.kt` uses Menu/Settings to toggle the in-app panel. If the Streamer remote sends Settings for its dashboard, Templar could hide the dashboard. The plan already moves this behind `captureDashboardKey` (default off). Keep that; this review adds nothing new there.
 
@@ -232,15 +233,85 @@ Add to section 20 (validation), per build that touches the home screen:
 - Press-count check for the table in section 2.
 - Focus never lost after remove, hide, move, or refresh.
 
-## 9. Questions for the owner
+## 9. Owner answers (2026-11-25)
 
-1. ~~Star button: what should it open?~~ **Answered 2026-11-25: the owner chooses in the app and can change it any time.** See section 6.1. No longer a question.
-2. **Fold today's quick-settings panel into the new quick menu, so there is one menu instead of two?** Yes / No. Yes est. ~10% (one thing to learn, one trigger). No keeps quick settings on its own key.
-3. **Provider rows on home: rank these**, 1 = most wanted.
-   - a) One "recently played" shelf per provider, provider rows behind "More from …" (~25%, shortest paths) ⭐ Recommended
-   - b) Shelf plus the provider's top row inline, the rest behind "More" (~18%)
-   - c) Everything inline, as in the plan (~5%; longest scroll)
+1. **Star button:** chosen and changed in Templar. Default is the quick menu. See section 6.1.
+2. **Quick settings vs quick menu:** owner said "you choose, and explore more settings". Decision: **fold quick settings into the quick menu** as one section, so there is one menu and one trigger. The Menu key inside Templar opens the same quick menu. The full set of options lives in a proper Settings screen, mapped in section 11.
+3. **Provider rows:** owner wants something "totally different" from left-to-right rows, with a choice of views on the TV. See section 10. Inside any view, each provider still shows one "recently played" shelf by default, with the provider's own rows behind "More from …" (a per-shelf option can show them inline).
 
-## 10. Rollback
+## 10. Home views the owner can switch between (new)
+
+The owner picks a view in Settings → Home → View, or from the quick menu ("Change view"). All views read the **same** shelves, favourites, row order and hidden rows, so switching never loses an edit. Each view is its own feature flag (Beta until used for a while), and the classic Rows view can't be turned off, so there is always a working home. Views are original designs, not copies of another launcher.
+
+### 10.1 The views
+
+| View | What it looks like | D-pad | Best for |
+| --- | --- | --- | --- |
+| **Rows** (today) | Horizontal shelves stacked top to bottom | Up/Down = shelf, Left/Right = tile | Familiar; lots of shelves |
+| **Columns** | Each shelf is a vertical column of posters, 4 to 5 columns side by side (Continue, Favourites, Peacock, Paramount+, …). Columns scroll on their own | Left/Right = column, Up/Down = tile in column | Seeing every provider at once without scrolling the page |
+| **Rail + grid** | A slim list of shelf names on the left; the chosen shelf fills the right as a poster grid (3 rows of 5 to 6) | Left rail Up/Down picks a shelf (the grid updates as you go); Right enters the grid | Fastest jump to any shelf: 1 to 3 presses |
+| **Spotlight** | Full-screen artwork of the focused show with title, progress and provider; one compact strip at the bottom | Left/Right = show, Up/Down = switch shelf (the strip slides) | Living-room "big box" feel, one show at a time |
+| **Wall** | One big poster grid of everything, with filter chips across the top (All, Continue, Favourites, Peacock, …, Server) | Up from row 1 = chips; chips Left/Right filter; Down = grid | Browsing by filter instead of by shelf |
+| **List** | Text-first list, two columns: title, provider, episode, progress bar, small thumbnail | Up/Down = item, Left/Right = jump a shelf | Speed, small text sizes, keyboard users |
+
+### 10.2 Press counts by view (from first focused item)
+
+| Task | Rows | Columns | Rail + grid | Spotlight | Wall | List |
+| --- | --- | --- | --- | --- | --- | --- |
+| Resume last show | 1 | 1 | 2 (Right, OK) | 1 | 1 | 1 |
+| Open 3rd favourite | ~4 | ~4 | ~4 | ~4 | ~4 (chip) | ~3 |
+| Reach Max shelf | ~6 | ~6 Right | ~7 Down in rail, or type "M" on a keyboard | ~6 | ~8 (chip) | ~6 |
+| Reach Apps | ~4 (top bar) | ~4 | ~3 | ~4 | ~3 (chip) | ~4 |
+| Google Home | ~3 (top bar icon) | ~3 | ~3 | ~3 | ~3 | ~3 |
+
+Rail + grid wins on jumping between shelves. Columns wins on seeing everything at once. Spotlight is the most cinematic but the slowest to browse. Recommended default: **Columns** for "totally different" with short paths, with Rows one tap away. [A]
+
+### 10.3 Rules every view must follow
+
+- Same tile menu, same move mode and same focus rules (section 3.4). Move mode follows the view's main axis: in Columns a tile moves Up/Down within its column, and a whole column moves Left/Right in "Move column".
+- The top bar (tabs, Google Home icon, clock) stays the same in every view, so Google Home is always in the same place.
+- Back from deep in any view returns to its first item; a second Back goes to the top bar.
+- Switching views keeps focus on the same show where that show is visible in the new view.
+- **Preview before switching:** Settings → Home → View shows a live preview of each view; OK applies, Back keeps the current one. Quick-menu "Change view" cycles views with Left/Right and applies on OK.
+- Per profile: each profile can have its own view.
+- Performance: Columns and Wall load more posters at once. Load the visible ones at display size first and cap each column at 20 tiles plus "See all". Check smoothness on the Streamer before a view leaves Beta. [V]
+
+### 10.4 Per-view options
+
+- Columns: number of columns (3 to 6), poster or landscape tiles, column width.
+- Rail + grid: rail on the left or right, grid density (3×5 or 2×4), show counts next to shelf names.
+- Spotlight: background blur and dimming, auto-advance on or off (off by default), show trailer artwork only (no autoplay video in v1).
+- Wall: chips to show, sort by recent, A–Z or provider.
+- List: show thumbnails on or off, text size.
+
+## 11. Settings map (new)
+
+Layout of the Settings screen for a TV: categories on the left, options on the right, each option with a one-line description. Changes apply live. Every category has "Reset this section". Every reset or clear goes to a restorable list for 30 days rather than deleting outright.
+
+| Category | Settings |
+| --- | --- |
+| **Home** | View (section 10) and per-view options; Row Manager (order, show or hide, rename); tile size; row dimming level; poster or landscape style; clock and date; spotlight panel on or off; start screen (home, last view, favourites) |
+| **Shelves and favourites** | Auto-add from playback on or off; minimum watch time before a show counts (default 2 minutes); one tile per series; shelf length; Recently removed (restore) |
+| **Providers** | Enable, disable and order providers; show provider rows inline per provider; measured capabilities per provider; test deep link |
+| **Remote and keyboard** | Star button action (6.1) with set-up guide; Menu key action (default: quick menu); hold-OK time for the tile menu (short, normal, long); shortcut editor; global shortcuts over other apps (off); type to search; touchpad hover moves focus (off); focus sounds |
+| **Quick menu** | Sections to show and their order; side (left or right); width; open over video (overlay mode, off); show what's playing at the top |
+| **Search and voice** | Sources (history, shelves, Jellyfin, provider rows, TMDB); ranking (my subscriptions first, then server, then rent or buy); hide rent or buy results; voice language; send search text to TMDB (follows TMDB toggle) |
+| **Google** | Google Home tile (can't be turned off while Templar is HOME); Open Google TV Home; Return to Google TV guide; HOME watchdog (off) |
+| **Personal media** | Jellyfin server (entered on the TV, never in git); libraries to show; music on home on or off |
+| **Privacy and history** | Watch history on or off; how long to keep history; observers (MediaSession, focused tile, OCR) each on or off; review queue; clear history (restorable for 30 days) |
+| **Appearance** | Theme, accent colour, background; text size (Normal, Large, Extra large); reduce motion; focus style (outline, scale, both) |
+| **Profiles** | Add, switch, and edit profiles; what each profile shares |
+| **Features** | Every feature flag with status (Stable, Beta, Experimental) |
+| **Backup and restore** | Export or import layout, shelves, favourites, shortcuts, views and settings to a local file |
+| **Diagnostics** | Flag states, provider capabilities, recognizer status, last shortcut matched; never other apps' keys |
+| **About and rollback** | Version, checksums, how to make Google TV the home screen again |
+
+Quick menu "Quick settings" section shows a short pick of these: View, Theme, Text size, Focus sounds, and "All settings".
+
+## 12. Still open
+
+Nothing blocks the design. To confirm on the TV with the device probe: Google's star-button picker lists the "Templar Menu" companion; Columns and Wall views scroll smoothly on the Streamer; the translucent quick menu doesn't stop playback in the four providers.
+
+## 13. Rollback
 
 Docs only. Revert the commit or close the PR.
