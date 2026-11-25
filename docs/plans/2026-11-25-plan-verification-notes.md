@@ -144,3 +144,45 @@ The owner asked Claude to decide these on 2026-11-25. All three are settings, so
 - [Reddit mirror: Google TV Streamer Projectivy question](https://axebps-redlib.hf.space/r/AndroidTV/comments/1jrrjxe/google_tv_streamer_projectivy_question)
 
 Not done: nothing was tested on a device, and REA was not run.
+
+## 7. Fix for "Home lands on Templar" (added 2026-11-25 after the live device test)
+
+Device facts from the B1 live test (PR #6 comments): with Templar holding the HOME role, a Home press still started `launcherx/.home.HomeActivity`. A long press opened launcherx's `DashboardHandler` window. The star key reached Templar's accessibility service as `MACRO_1`, and Google's smart-home screen opened 30 ms later because the key was not consumed. [E: device]
+
+### Chosen approach: watch the window, never touch the Home key
+
+- The accessibility service already listens for `typeWindowStateChanged`. When the window that appears is exactly launcherx's `HomeActivity`, Templar starts its own main activity on top.
+- Templar does not consume or filter the Home key. The framework still sees every press, so long-press Home keeps opening Google's dashboard. Only the one `HomeActivity` class is matched. `DashboardHandler` and every other launcherx window are left alone.
+- The HOME role stays with launcherx. The role did not help on this build, and leaving it means rollback is one step: turn the service off.
+- Key filtering becomes a separate runtime flag (`setServiceInfo`), off by default. The Home fix then carries no volume-repeat risk.
+- "Open Google TV Home" in Templar sets a bypass so Google's home stays up until the user leaves it.
+- Loop guard: at most three relaunches in ten seconds, then stop and show a notice. This protects Google's setup and recovery screens.
+- One flag, `home_override`, default off until the test below passes.
+
+### Rejected: catch the short Home press in the key filter
+
+Consuming Home hides it from the framework, so Templar would have to detect the long press itself and reopen the dashboard through a launcherx action that may be protected. That puts the owner's hard constraint at risk, and it needs the key filter that may break volume repeat. Keep it only as a backup if the window approach fails.
+
+### Star button
+
+To stop Google's smart-home screen opening as well, the service must return true for `MACRO_1` down and up. That needs the key filter flag, so it depends on the volume test. When the owner's star setting is "Google's own action", Templar passes the key through.
+
+### Risks
+
+- A brief flash of Google's home before Templar appears. [V]
+- After boot or wake, Google's home may show until the service binds. [V]
+- March 2026 reports say a Google TV update stopped Projectivy's similar override for some users. A future update could do the same here. Diagnostics should show "override last fired" so a break is visible. [E-weak]
+- The service is enabled through adb and can be switched off by a system update. The HOME watchdog covers this.
+
+### Test for the TV probe thread
+
+Needs a spike build: about 15 lines in `VistaAccessibilityService` behind `home_override`, key filter off. Leave the HOME role with launcherx. Capture with `adb logcat -s ActivityTaskManager`.
+
+1. From Peacock, press Home five times. Pass: Templar is on top each time. Note the flash length.
+2. Long-press Home from Templar and from Peacock. Pass: the dashboard opens, the Google Home panel works, and closing it returns to the earlier screen.
+3. Use "Open Google TV Home" in Templar. Pass: Google's home stays up.
+4. Reboot, then sleep and wake. Record which screen lands and how long Templar takes.
+5. Hold volume up for three seconds. Pass: it keeps repeating.
+6. Turn the key filter on with `MACRO_1` consumed and press star. Pass: only Templar's menu opens. Then repeat step 5.
+
+Rollback: disable the accessibility service, which restores today's behaviour. Nothing else on the device changes.
