@@ -123,4 +123,17 @@ object HomeRules {
     }
 
     enum class BackTarget { NONE, FIRST_TILE, TOP_BAR }
+
+    /**
+     * The key of the first focus stop in [view]: the first tile for most views, the first shelf name in
+     * Rail + grid and the "All" chip on the Wall. Null when there is nothing to focus.
+     */
+    fun firstKey(view: HomeView, rows: List<HomeRowModel>): String? {
+        val first = rows.firstOrNull() ?: return null
+        return when (view) {
+            HomeView.RAIL_GRID -> "rail:${first.rowId}"
+            HomeView.WALL -> "chip:0"
+            else -> first.tiles.firstOrNull()?.key
+        }
+    }
 }
