@@ -26,3 +26,22 @@ Tablet side: Templar-Tablet branch `claude/companion-client` (v0.5.0).
 
 ## Rollback
 Turn Companion API off (port closes), press Unpair all devices, or uninstall Templar TV.
+
+## Streamer install (2026-11-25, owner approved)
+Before install (Google TV Streamer, Wi-Fi adb):
+- Installed Templar TV: 0.1.0, versionCode 1, first installed 2026-11-22, last updated 2026-11-25 08:30.
+  APK pulled to the installing PC as a backup (SHA-256 7929af47…1842).
+- HOME role holder: `com.google.android.apps.tv.launcherx` (stock). Not changed.
+- Accessibility services enabled: none. Not changed.
+- Overlay (`SYSTEM_ALERT_WINDOW`) for Templar TV: `default` (not granted). Not changed.
+- Port 8780 not listening.
+
+Installed build: this branch's release APK (includes B2 data layer, SHA-256 8f92f3f4…ef19), `adb install -r`, same versionCode.
+Database: B2 keeps the file name `templar-tv-watchhistory` and migrates v1 → v2 with `ALTER TABLE ... ADD COLUMN`
+and `CREATE TABLE IF NOT EXISTS` only; no destructive fallback is configured, so existing rows are kept.
+
+Rollback commands (replace the address with the Streamer's adb address):
+- Remove Templar TV and its data; the stock launcher stays HOME: `adb -s <streamer> uninstall com.firestarterpro.templartv`
+- Go back to the previous APK instead (a v2 database cannot be opened by v1, so its data is cleared first):
+  `adb -s <streamer> shell pm clear com.firestarterpro.templartv` then
+  `adb -s <streamer> install -r -d templartv-0.1.0-before-companion.apk`
