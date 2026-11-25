@@ -1,8 +1,15 @@
 # Templar TV: Canonical Product Intent and Feature Vision
 
-Version: 2026-11-25. This is the owner's plan, updated with the 2026-11-25 asks (big-box shelves, favourite shows, in-app voice search, keyboard shortcuts, quick menu, keeping Google Home). Where the new asks conflict with the earlier text, the new asks win. Changed or new text is marked **(2026-11-25)**.
+Version: 2026-11-25. This is the owner's plan, updated with the 2026-11-25 asks (big-box shelves, favourite shows, keyboard shortcuts, one quick menu, selectable home views, keeping Google Home; in-app voice was later dropped). Where the new asks conflict with the earlier text, the new asks win. Changed or new text is marked **(2026-11-25)**.
 
-Research and platform limits behind the changes: [2026-11-25-big-box-gap-analysis.md](2026-11-25-big-box-gap-analysis.md).
+Research and platform limits behind the changes: [2026-11-25-big-box-gap-analysis.md](2026-11-25-big-box-gap-analysis.md). Platform checks: [2026-11-25-plan-verification-notes.md](2026-11-25-plan-verification-notes.md). 10-foot design: [2026-11-25-big-box-design-review.md](2026-11-25-big-box-design-review.md).
+
+## Latest decisions (2026-11-25, afternoon). These win over anything below.
+
+1. **Templar's own voice recognizer is dropped.** Google's voice search stays as it is, on the Assistant button. Typing in Templar search (on-screen keyboard or hardware keyboard) stays. The voice spike and voice-fallback setting are cancelled. Reason: no source confirms the remote's mic reaches a third-party app, and the owner chose to drop features that need more hands-on testing.
+2. **Home and star button are pending the spike in PR #8.** On the Streamer, holding the HOME role does not win the Home key: Google's launcher still opens (device test, PR #6). PR #8 adds two flags, both off by default: `home_return` (when Google's home window appears, Templar comes back on top; the Home key is never consumed, so long-press Home and the Google Home panel are untouched) and `star_key_capture` (consumes the star key and runs Templar's star setting). If the spike fails, both are dropped: Templar stays a normally launched app, and the no-code fallback for the star button is to pick Templar in Google's own button picker.
+3. **Selectable home views.** The owner picks how home looks in Settings → Home → View: Rows, Columns, Rail + grid, Spotlight, Wall, or List. All views share the same shelves, favourites, and order, so switching never loses edits. Rows can't be turned off. Details: design review section 10.
+4. **One quick menu.** Today's quick-settings panel folds into the quick menu as one section. One menu, one trigger; the Menu key inside Templar opens it too. Its footer always holds Google Home, Google TV Home, and Templar Home. The full option list lives in Settings (design review section 11).
 
 ## 1. Product purpose
 
@@ -16,7 +23,7 @@ Templar TV is a custom home screen and media-intelligence platform for the Googl
 - User-controlled recommendations and row ordering
 - Upcoming, newly released, and leaving-soon content
 - Reliable launching into installed streaming apps
-- **(2026-11-25)** Voice search inside Templar across the user's subscriptions, without bouncing to the Google TV launcher
+- **(2026-11-25)** Search inside Templar across the user's subscriptions, by typing on screen or on a hardware keyboard (voice stays with Google; see Latest decisions)
 - **(2026-11-25)** Input beyond the Google remote: a handheld keyboard with touchpad, custom shortcuts, and a pop-up quick menu over any app
 - Google Gemini voice and visual capabilities where Google remains useful
 
@@ -35,7 +42,7 @@ Templar TV must coexist with Google's stock launcher, which remains installed an
 
 Responsibilities:
 
-- Templar TV: home screen, streaming organization, personal media, provider preferences, viewing history, discovery, recommendations, media-specific actions, **(2026-11-25)** media voice search, shortcuts, and the quick menu
+- Templar TV: home screen, streaming organization, personal media, provider preferences, viewing history, discovery, recommendations, media-specific actions, **(2026-11-25)** subscription search, shortcuts, selectable home views, and the quick menu
 - Google Gemini: general assistance, sports, weather, topical briefs, visual AI answers, and Google Home functions. **(2026-11-25)** Gemini keeps the remote's Assistant button. Templar never intercepts it.
 - Google TV Home (stock launcher): secondary interface for Google-native visual presentation
 - **(2026-11-25)** Google Home panel (the smart-home panel in the Google TV dashboard): stays one step away at all times
@@ -155,7 +162,6 @@ Templar TV must not circumvent DRM, capture protected video, extract credentials
 **(2026-11-25)** Key handling rules:
 - The accessibility key filter never logs keys from other apps in release builds (today it logs every key code, which a hardware keyboard would turn into a log of typed text).
 - Global shortcuts act only on modifier chords or unused keys and pass every other key through.
-- Voice audio goes to the device's speech recognizer only while the user holds or taps the Templar mic.
 - Search terms sent to an external catalog (TMDB) are covered by that source's own toggle.
 
 OCR and focused-tile observation remain experimental until validated on the physical device.
@@ -182,7 +188,7 @@ OCR and focused-tile observation remain experimental until validated on the phys
 **(2026-11-25) Edit mode** (long-press OK on a tile or row title, or a keyboard shortcut):
 - On a tile: Open, Add to favourites, Move, Remove from this shelf, Hide, Change provider, Mark watched, Show evidence.
 - On a row: Move row, Hide row, Rename, Tile size, Show only this provider.
-- "Add a show" tile at the end of each provider shelf and of Favourites: search by voice or keyboard, pick the show and provider.
+- "Add a show" tile at the end of each provider shelf and of Favourites: search by typing (on screen or keyboard), pick the show and provider.
 - A Row Manager screen in Settings lists all rows with toggles and order.
 
 Rows also support provider filtering, profile assignment, artwork and tile-size options, personalized recommendations, hiding unavailable services, and experimental-feature status indicators.
@@ -209,7 +215,7 @@ Personal relevance considers watch history, **(2026-11-25)** favourite shows and
 
 Search spans installed providers, Jellyfin libraries, watch history, **(2026-11-25)** favourite shows and shelves, upcoming releases, watchlists, and external metadata catalogs.
 
-**(2026-11-25)** Search accepts voice (section 13), the on-screen keyboard, and a hardware keyboard.
+**(2026-11-25)** Search accepts the on-screen keyboard and a hardware keyboard. Voice search stays with Google (section 13).
 
 Where supported, results open the correct provider, title, season, episode, Jellyfin item, or resume position. If exact deep linking is unavailable, Templar TV opens the provider (and the provider's search with the title, where the app supports it) and keeps the title on screen. The result shows which kind of link it will use.
 
@@ -217,30 +223,23 @@ Provider preferences affect ranking. Content included with an active subscriptio
 
 ## 13. Voice behavior
 
-**(2026-11-25) This section changes. In-app voice search is now a core feature, not a later one.**
+**(2026-11-25, latest) Templar's own voice recognizer is dropped.** Google's voice search and Gemini stay on the Assistant button, exactly as they are. Templar does not intercept or replace them.
 
-- Templar TV has its own voice search: a mic button on its search screen and in the quick menu, plus an optional keyboard shortcut and an optional star-button mapping. It uses the device speech recognizer and shows results inside Templar, filtered and ranked by the user's subscriptions. It must not bounce to the Google TV launcher.
-- If the recognizer is unavailable on the device, the mic button says so and text search still works.
-- Gemini remains the default general assistant on the Assistant button. Templar does not intercept or replace it.
-
-Media commands Templar can handle from its own voice entry: play content from the personal server, resume the last episode, show new episodes or unfinished programs, search personal music, show recently added movies, open a preferred provider, find a title on subscribed services, add a show to favourites, and correct a history entry.
-
-Routing:
-- General knowledge, sports, weather, visual briefs, and smart home → Gemini (Assistant button)
-- Personal media, watch-history, and subscription search → Templar (Templar mic)
-- Unsupported requests in Templar's mic → a visible Templar search screen with an "Ask Google" hint
+- Templar search is typed: on-screen keyboard, or a hardware keyboard (section 17.1).
+- Routing: general knowledge, sports, weather, visual briefs, smart home, and voice search → Google (Assistant button). Personal media, watch history, favourites, and subscription search → Templar (typed search, shelves, quick menu).
+- Revisit only if a later platform change confirms the remote's mic reaches a third-party app. It would come back behind its own flag, default off.
 
 ## 14. Profiles
 
 The architecture supports multiple local profiles even if the first release is single-user.
 
-Profile-level settings may include active providers, row order, favourites, watch and Continue Watching history, recommendation preferences, hidden genres or content, Jellyfin profile, voice routing, playback settings, data retention, **(2026-11-25)** shelves, shortcuts, quick-menu contents, and feature toggles.
+Profile-level settings may include active providers, row order, favourites, watch and Continue Watching history, recommendation preferences, hidden genres or content, Jellyfin profile, playback settings, data retention, **(2026-11-25)** shelves, shortcuts, quick-menu contents, and feature toggles.
 
 Profiles must never silently mix viewing histories.
 
 ## 15. Visual customization
 
-Customization includes themes, colors, and backgrounds; tile sizes and row styles; dock size and order; column count; hero artwork; clock and date; system status; provider visibility; personal-media placement; **(2026-11-25)** a "big box" style with large poster shelves per provider; drag-style move mode for tiles and rows; and quick-menu layout.
+Customization includes themes, colors, and backgrounds; tile sizes and row styles; dock size and order; column count; hero artwork; clock and date; system status; provider visibility; personal-media placement; **(2026-11-25)** selectable home views (Rows, Columns, Rail + grid, Spotlight, Wall, List; design review section 10) with large poster shelves per provider; drag-style move mode for tiles and rows; and quick-menu layout.
 
 The project must preserve Vista's working Compose for TV focus and navigation behavior. Customization must not reduce reliability.
 
@@ -250,21 +249,23 @@ History records explain the selected title, provider, confidence, evidence sourc
 
 The user can confirm a match, choose another candidate, enter a title manually, mark a session irrelevant, merge duplicates, correct season or episode, delete private history locally, and disable an observer.
 
-**(2026-11-25)** Diagnostics also show every feature flag and its state, each provider's measured capabilities, the recognizer status, and which key the last shortcut matched. Diagnostics never expose credentials or other apps' keystrokes.
+**(2026-11-25)** Diagnostics also show every feature flag and its state, each provider's measured capabilities, when the Home return last fired, and which key the last shortcut matched. Diagnostics never expose credentials or other apps' keystrokes.
 
 ## 17. Input devices, shortcuts, and quick menu (2026-11-25, new)
 
 ### 17.1 Keyboard and touchpad
 - Support USB and Bluetooth HID keyboards and touchpads, including handheld 92-key models with a touchpad. **(owner, 2026-11-25)** The owner's keyboard may have both Bluetooth and a USB dongle, so both paths are supported. Bluetooth is the default recommendation because the Streamer's only USB-C port is mainly for power; the device probe checks whether it carries data through a hub.
 - Typing goes straight into Templar search. Arrow keys, Enter, and Esc behave like D-pad, Select, and Back. The touchpad pointer can click tiles and scroll rows.
-- **Shortcut editor** (Settings → Shortcuts): record a key or chord, then pick an action: open app, open a shelf, open favourites, voice search, quick menu, Google Home panel, Google TV Home, play/pause, back to Templar, toggle a feature.
+- **Shortcut editor** (Settings → Shortcuts): record a key or chord, then pick an action: open app, open a shelf, open favourites, Google voice search, quick menu, Google Home panel, Google TV Home, play/pause, back to Templar, toggle a feature.
 - Inside Templar any key can be bound. Over other apps, only modifier chords or unused keys (for example F1–F12) act; everything else passes through untouched.
 
 ### 17.2 Quick menu
 - A pop-up menu that opens over any app, scrolls with the D-pad, and launches without returning to the home screen. Back closes it and returns to the app.
-- Default sections (each can be hidden or reordered): Continue Watching (top 5), Favourite Shows, pinned apps, Voice search, Google Home panel, Google TV Home, Quick settings.
+- **(latest)** This is the only menu: today's quick-settings panel folds into it as the Quick settings section, and the Menu key inside Templar opens it.
+- Default sections (each can be hidden or reordered): Resume, Continue Watching, Favourite Shows, pinned apps, Quick settings, Change view. Pinned footer that can't be hidden: Google Home, Google TV Home, Templar Home.
 - Triggers: the remote's star button, a keyboard shortcut, and optionally a remote key captured by the accessibility service. Long-press Home and long-press star are never used.
-- **(owner, 2026-11-25) Star button is chosen and changed in Templar.** Settings → Star button lists what a star press does: Quick menu (default), Voice search, Favourite shows, Continue Watching, a chosen app, or Google Home panel. How it works:
+- **(latest) The star button is pending the PR #8 spike** (`star_key_capture`, off by default). If the spike fails, the star button feature is dropped and the owner can pick Templar in Google's own button picker. The design below applies if it passes.
+- **(owner, 2026-11-25) Star button is chosen and changed in Templar.** Settings → Star button lists what a star press does: Quick menu (default), Favourite shows, Continue Watching, a chosen app, or Google Home panel. How it works:
   - The star button is mapped once in Google's shortcut editor (hold star for 1–2 seconds) to a tiny companion app, "Templar Menu", with its own package. A second entry inside Templar is probably not listed by Google's picker.
   - Each star press opens the companion, which reads Templar's setting and does that action. Changing the action later happens only in Templar.
   - "Google Home panel" has no public way for an app to open it, so picking it shows the steps to point the star button back at Google Home in Google's editor. The quick menu keeps a Google Home tile either way.
@@ -284,12 +285,14 @@ Every feature is user-toggleable. Flags move from compile-time constants to a ru
 | shelfEditing | on |
 | favouriteShows | on |
 | rowManager | on |
-| voiceSearch | on |
 | tmdbCatalog | on once a key is entered (owner approved TMDB, 2026-11-25) |
 | starButtonAction (setting, not a flag) | Quick menu |
 | starKeyCapture | off |
 | unifiedSearch | on |
-| quickMenu | on |
+| quickMenu (includes quick settings) | on |
+| homeViews (each view is Beta; Rows always on) | Rows |
+| home_return (PR #8 spike) | off |
+| star_key_capture (PR #8 spike) | off |
 | quickMenuOverlayMode | off |
 | keyboardShortcuts | on |
 | globalShortcuts (over other apps) | off |
@@ -300,14 +303,14 @@ Every feature is user-toggleable. Flags move from compile-time constants to a ru
 | lowConfidenceReview | off |
 | focusedTileObservation | off |
 | ocrObservation | off |
-| customVoiceRouting | off |
+| customVoiceRouting | off (dropped with Templar voice) |
 | layoutBackup | on |
 | homeWatchdog | off |
 | diagnostics | on |
 
 ## 19. Technical foundation
 
-Templar TV is based on the Vista Android TV launcher and uses Kotlin, Jetpack Compose for TV, Android TV HOME intents, Android TV provider rows, deep links, local launch history, Room persistence, KSP, runtime feature flags, provider capability contracts, Jellyfin integration boundaries, observation contracts, the Google Home handoff, **(2026-11-25)** the speech recognizer, the accessibility key filter, and layout backup and restore (export and import of rows, shelves, favourites, shortcuts, and flags to a local file).
+Templar TV is based on the Vista Android TV launcher and uses Kotlin, Jetpack Compose for TV, Android TV HOME intents, Android TV provider rows, deep links, local launch history, Room persistence, KSP, runtime feature flags, provider capability contracts, Jellyfin integration boundaries, observation contracts, the Google Home handoff, **(2026-11-25)** the accessibility window watcher and key filter (both flag-gated), and layout backup and restore (export and import of rows, shelves, favourites, shortcuts, and flags to a local file).
 
 It retains Vista's useful behavior while replacing its identity and extending its architecture.
 
@@ -350,7 +353,8 @@ The final product provides:
 - A home screen based on actual subscriptions
 - **(2026-11-25)** Big-box shelves of recently played shows per provider, editable, with add
 - **(2026-11-25)** A separate favourite-shows list in the user's own order
-- **(2026-11-25)** Voice and keyboard search inside Templar across subscriptions
+- **(2026-11-25)** Typed and keyboard search inside Templar across subscriptions, with Google voice search kept as it is
+- **(2026-11-25)** Home views the owner can switch between
 - **(2026-11-25)** Keyboard shortcuts and a quick menu over any app
 - Native access to personal server media
 - Durable cross-provider watch history

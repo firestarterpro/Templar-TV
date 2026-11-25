@@ -1,5 +1,7 @@
 # Templar TV big-box gap analysis and platform research (2026-11-25)
 
+> **Superseded in part (2026-11-25, afternoon):** Templar voice search (4.3) is dropped, Home and star button wait on the PR #8 spike, quick settings folds into one quick menu, and home views are selectable. See "Latest decisions" in the canonical plan.
+
 Research only. Nothing here is built yet. Companion to
 [2026-11-25-templar-tv-canonical-plan.md](2026-11-25-templar-tv-canonical-plan.md).
 

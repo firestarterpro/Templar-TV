@@ -1,5 +1,7 @@
 # Templar TV big-box plan handoff (2026-11-25)
 
+> **Update (2026-11-25, afternoon):** B0 merged (PR #7). B6 voice and the S1 voice spike are cancelled: Google voice search stays. B5 star button and the Home return wait on the PR #8 spike. Quick settings folds into the quick menu. Home views are selectable (design review section 10). See "Latest decisions" in the canonical plan.
+
 ## State
 - Research and planning only. No app code changed in this PR.
 - New canonical plan: [docs/plans/2026-11-25-templar-tv-canonical-plan.md](../plans/2026-11-25-templar-tv-canonical-plan.md). It supersedes the plan text in the owner's 2026-11-25 message wherever they differ, and the new asks win over the older text.
