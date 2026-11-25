@@ -69,6 +69,12 @@
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|density|fontScale|locale|layoutDirection"
             android:theme="@style/Theme.Vista.Transparent" />
 
+        <!-- Settings -> Features: runtime feature flags -->
+        <activity
+            android:name=".FeaturesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Vista" />
+
         <!-- Captures the Settings/dashboard key globally to open quick settings (enabled via adb) -->
         <service
             android:name=".service.VistaAccessibilityService"

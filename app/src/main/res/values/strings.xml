@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Templar TV</string>
-    <string name="a11y_description">Lets the Settings button on your remote open Vista\'s quick-settings panel from any app.</string>
+    <string name="a11y_description">Optional. When the Settings key feature is switched on, the Settings button on your remote opens Templar TV\'s quick menu from any app. Off by default; nothing is recorded.</string>
 </resources>
