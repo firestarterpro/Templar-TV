@@ -51,8 +51,10 @@ interface ProfileSettingDao {
 
 /** Known setting keys with their defaults. The UI picks values; this layer only stores them. */
 object SettingKeys {
-    /** rows | columns | rail_grid | spotlight | wall | list. Rows is the always-working default. */
+    /** rows | columns | rail_grid | spotlight | wall | list. Rows always works; Columns is the default. */
     const val HOME_VIEW = "home_view"
+    /** How many columns the Columns view shows at once (3 to 6). */
+    const val COLUMNS_COUNT = "columns_count"
     /** quick_menu | voice_search | favourite_shows | continue_watching | app:<package> | google_home_panel */
     const val STAR_ACTION = "star_action"
     /** google_speech_popup | templar_recognizer */
@@ -62,7 +64,8 @@ object SettingKeys {
     const val SHELF_LENGTH = "shelf_length"
 
     val defaults: Map<String, String> = mapOf(
-        HOME_VIEW to "rows",
+        HOME_VIEW to "columns",
+        COLUMNS_COUNT to "4",
         STAR_ACTION to "quick_menu",
         VOICE_FALLBACK to "google_speech_popup",
         AUTO_ADD_FROM_PLAYBACK to "true",
