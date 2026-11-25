@@ -58,3 +58,24 @@ Grant overlay:
 
 Revoke overlay (back to the state before install):
 `& { adb -s <streamer> shell appops set com.firestarterpro.templartv SYSTEM_ALERT_WINDOW default } 2>&1 | Set-Clipboard`
+
+## On-device verification (2026-11-25 ~15:20, owner installed and paired)
+Read-only checks from the PC plus taps on the tablet's own UI:
+- PASS: Templar TV running, no crash in logcat. HOME still the stock launcher. Accessibility services: none.
+- PASS: port 8780 listening with Companion API on; `GET /status` answers from the LAN, `authorized:false` without a token.
+- PASS: tablet shows "Paired with Templar TV 0.1.0 at 192.168.0.166".
+- PASS: Open app from the tablet (Paramount+ came to the front on the TV).
+- PASS: Open Templar menu from the tablet (QuickSettingsActivity came to the front over Paramount+).
+- PASS: Pin a favourite app (DIRECTV) from the tablet.
+- FAIL → fixed: Unpin timed out on the tablet. Cause: the companion host called `AppRepository.loadApps()`, which
+  decodes every app's banner and icon (seconds on the Streamer), twice per call. Fixed on `claude/companion-fixes`
+  with an icon-free listing and direct launch intents; tablet read timeout raised to 15 s.
+- FAIL → fixed: Home rows list was empty. Nothing seeds the default profile's rows yet (B4 UI will); the companion
+  now calls `profiles.ensureDefault()` (idempotent) when it starts.
+- Observation: `appops get` shows `SYSTEM_ALERT_WINDOW: default` after the owner's grant, yet app launch and the quick
+  menu still came to the front. So `mayBeBlocked` (based on `canDrawOverlays`) is pessimistic here; the starts work.
+- Observation: `historyEnabled:true`, so "Share watch history with companion" is on.
+- NOT RUN on device: favourite shows / shelf pin / restore. The tablet adds those from Jellyfin search, and no
+  Jellyfin URL/key is set on the tablet; the PC has no token. Covered by the JVM tests.
+- Still open: DIRECTV is left pinned as a favourite app (the unpin call timed out before the fix). Unpin from the
+  tablet after the fixed TV build is installed.
