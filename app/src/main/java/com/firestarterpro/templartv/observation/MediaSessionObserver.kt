@@ -230,10 +230,24 @@ class MediaSessionObserver private constructor(context: Context) {
             if (raw.trackNumber > 0) add("track")
             if (raw.discNumber > 0) add("disc")
         }.joinToString(",")
+        if (FeatureFlags.isEnabled(app, Flag.DEBUG_METADATA_VALUES)) dumpValues(key, md)
         val code = "fields=$present"
         if (lastNote["shape:$key"] != code) {
             lastNote["shape:$key"] = code
             ObserverDiagnostics.note(key.substringBefore('/'), code)
+        }
+    }
+
+    /** Debug flag only: every key an app sets, with its value, once per change. */
+    private fun dumpValues(key: String, md: MediaMetadata) {
+        val line = md.keySet().sorted().joinToString(" | ") { k ->
+            val text = md.getString(k)?.takeIf { it.isNotBlank() }
+            val num = md.getLong(k).takeIf { it != 0L }
+            "$k=${text ?: num ?: "(non-text)"}"
+        }
+        if (lastNote["values:$key"] != line) {
+            lastNote["values:$key"] = line
+            ObserverDiagnostics.debugValue(key.substringBefore('/'), "metadata", line)
         }
     }
 

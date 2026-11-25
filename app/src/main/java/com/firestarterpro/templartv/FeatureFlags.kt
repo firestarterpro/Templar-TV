@@ -27,6 +27,11 @@ enum class Flag(
     PROVIDER_ROWS("provider_rows", true, "Provider rows", "Show rows for your streaming providers."),
     PREVIEW_AND_UPCOMING("preview_and_upcoming", true, "New and upcoming", "Show new, upcoming and leaving-soon sections."),
     GOOGLE_HOME_HANDOFF("google_home_handoff", true, "Google Home shortcut", "Keep a way to open Google Home from Templar TV."),
+    DEBUG_METADATA_VALUES(
+        "debug_metadata_values", false, "Log playing metadata (debug)",
+        "While on, writes every field name AND value a streaming app publishes to the local log (adb logcat -s TemplarObserver), so the shelf parser can be tuned. Those values are what you are watching: turn it off afterwards.",
+        experimental = true,
+    ),
     DIAGNOSTICS("diagnostics", true, "Diagnostics", "Keep local diagnostics about Templar TV itself."),
     PROVIDER_RECENT_SHELVES("provider_recent_shelves", true, "Recently played shelves", "Keep a recently played shelf for each provider."),
     SHELF_EDITING("shelf_editing", true, "Edit shelves", "Add, move, pin, hide and remove shelf tiles."),
