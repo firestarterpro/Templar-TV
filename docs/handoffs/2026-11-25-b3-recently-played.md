@@ -48,3 +48,14 @@ Do not use `settings put secure enabled_notification_listeners ...` as the older
 
 ## Rollback
 Revert the PR. No schema change, so the database is untouched. To stop observing without reverting: turn off Settings → Features → Playback observation, or run the `disallow_listener` command above. Nothing is deleted either way.
+
+## Verification
+Run on the Acer, 2026-11-25, JDK 17, separate worktree, Gradle 8.7.
+- `:app:testDebugUnitTest`: **72 tests, 0 failures.** New: MediaMetadataParserTest 14, PlaybackTrackerTest 11, ObservationDataTest 7. Existing data tests unchanged and passing.
+- One fix found by the tests: a track that qualified at once (for example resuming far in) did not save its pause or stop; changed so a state change always records once qualified (`eebcc5d`).
+- `:app:assembleRelease`: built (`app-release.apk`, 19,374,674 bytes, SHA-256 `63ddb331b18b48b4c850407d56f513c7c65c674d5a3dc0796469d08cac096289`; built before the doc-only commits, code identical). Not installed on the TV.
+
+## Device facts read from the TV (read-only adb, 2026-11-25)
+- Templar's notification listener is **not** enabled (only the stock launcher's), so the observer would report `NO_ACCESS` today.
+- Peacock keeps an idle session with an empty metadata object (`size=0`) and a stale position after a watch; Netflix and Sling sessions have null metadata. Empty metadata is ignored by the parser (no title). Paramount+ and Prime Video had no session while idle. Max is not installed.
+- **Not yet measured**: real show, episode and season fields while a provider plays. No streaming session reached PLAYING during the capture window. The parser is therefore built on common conventions and falls back to the review queue when unsure. After the listener is enabled, play each app for a minute and read Settings diagnostics or `adb logcat -s TemplarObserver` (field names only), then tune `MediaMetadataParser`.
