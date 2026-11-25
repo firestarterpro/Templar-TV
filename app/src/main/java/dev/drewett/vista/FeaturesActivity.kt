@@ -101,8 +101,40 @@ class FeaturesActivity : ComponentActivity() {
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                     )
+                    var starAction by remember { mutableStateOf(FeatureFlags.starAction(this@FeaturesActivity)) }
                     if (flags[Flag.COMPANION_API] == true) CompanionPairingPanel()
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        item {
+                            Surface(
+                                onClick = {
+                                    val all = StarAction.entries
+                                    starAction = all[(all.indexOf(starAction) + 1) % all.size]
+                                    FeatureFlags.setStarAction(this@FeaturesActivity, starAction)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(16.dp)),
+                                colors = ClickableSurfaceDefaults.colors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    focusedContainerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                    focusedContentColor = MaterialTheme.colorScheme.onPrimary,
+                                ),
+                            ) {
+                                Row(
+                                    Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text("Star button action", style = MaterialTheme.typography.titleMedium)
+                                        Text(
+                                            "What the remote's star button does when \"Capture star button\" is on. Press to change.",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                        )
+                                    }
+                                    Text(starAction.label, style = MaterialTheme.typography.titleMedium)
+                                }
+                            }
+                        }
                         items(Flag.entries.toList()) { flag ->
                             val on = flags[flag] ?: flag.defaultEnabled
                             Surface(
