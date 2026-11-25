@@ -178,18 +178,20 @@ Never use colour alone for these; use shape and a text label in the focused-tile
 
 ### 6.1 Star button setting (owner answer, 2026-11-25)
 
-Settings → Remote → Star button, with these choices (default: Google Home panel, so nothing changes until the owner picks):
-- Google Home panel
-- Templar quick menu
-- Templar voice search
-- Favourite Shows
-- A chosen app
+Matches canonical plan section 17.2 (PR #4, commit 3adf1da).
 
-How Templar can honour the choice, best first:
-1. **Templar handles the key itself.** If the device probe shows the star button sends its own key code to the accessibility service, Templar maps it to the chosen action and passes it through untouched when "Google Home panel" is chosen. The setting then works fully inside Templar. [V]
-2. **System setting with Templar targets.** If the key never reaches apps, only Google TV's own setting can change it [K]. Templar then exposes launcher entries ("Templar Menu", "Templar Voice", "Templar Favourites") that the system setting can pick, and the in-app setting opens the system page with a one-line guide for the chosen option. [V]
+Settings → Star button, choices: **Quick menu (default)**, Voice search, Favourite Shows, Continue Watching, a chosen app, or Google Home panel.
 
-Either way the in-app screen shows what the star button does right now and how to undo it. Long-press Home always still opens the dashboard with Google Home.
+How it works:
+- The owner maps the star button once in Google's shortcut editor (hold star for 1–2 seconds) to a small companion app, "Templar Menu", with its own package. [V: sideloaded apps may not appear in Google's picker]
+- Each star press opens the companion, which reads Templar's setting and runs that action. Later changes happen only in Templar.
+- "Google Home panel" can't be opened by an app, so picking it shows the steps to point the star button back at Google Home in Google's editor.
+- Google Home stays a pinned tile in the quick menu footer either way, so with the default it is star → Google Home (~2 presses). Long-press Home still opens the dashboard with Google Home in 1.
+- Fallback if the companion can't be picked: accessibility capture of the star key, behind `starKeyCapture` (default off).
+
+Design notes for the companion:
+- It opens straight into the chosen action with no screen of its own, so a star press feels instant.
+- Templar's Star button setting shows what a press does right now and has a "Set up star button" guide for the one-time mapping.
 
 ### Behaviour
 - Pressing the trigger again closes it, as does Back. It returns to the app underneath.
@@ -205,7 +207,7 @@ Either way the in-app screen shows what the star button does right now and how t
 | Path | Where | Presses | Status |
 | --- | --- | --- | --- |
 | Long-press Home | Anywhere | 1 | Must never be consumed by Templar (plan rule). Test on every build. |
-| Star button | Anywhere | 1 | When the owner's star-button setting is "Google Home panel" (the default). See 6.1. |
+| Star button → quick menu footer | Anywhere | ~2 | Default setting (quick menu). 1 press if the owner points the star back at Google Home. See 6.1. |
 | Top-bar Google Home icon | Templar home | ~3 | **New in this review**; add to the plan. |
 | Quick menu footer | Anywhere the quick menu opens | ~2 | Pinned, can't be hidden. |
 | Quick settings tile | Templar | ~3 | Plan already has it; becomes part of the quick menu if question 2 is yes. |
