@@ -186,3 +186,18 @@ Needs a spike build: about 15 lines in `VistaAccessibilityService` behind `home_
 6. Turn the key filter on with `MACRO_1` consumed and press star. Pass: only Templar's menu opens. Then repeat step 5.
 
 Rollback: disable the accessibility service, which restores today's behaviour. Nothing else on the device changes.
+
+## 8. Status after the owner's decision (2026-11-25)
+
+The owner said these features can be dropped unless another way is found, and that they are done with hands-on testing. This supersedes section 5 where they differ.
+
+| Feature | Status |
+| --- | --- |
+| Home lands on Templar | **Pending the window-watch spike (section 7).** Dropped if the spike fails. Templar then stays a normally launched app. |
+| Star button opens Templar's menu | **Pending the same spike.** Dropped if it fails. No-code fallback: assign Templar to the star in Google's own button picker. |
+| Templar's own voice recognizer | **Dropped.** Use Google's voice search as it is. Typing in Templar search stays. The S1 voice spike and the voice fallback setting are cancelled. |
+
+Limits of testing without the owner pressing buttons:
+- An adb-injected Home key is a fair test of the window-watch fix, because the fix reacts to Google's home window and not to the key.
+- An injected key skips the accessibility key filter. Star-key capture and the hold-volume check cannot be proven by injection. Star capture therefore ships off, with "Google's own action" as the default, until someone presses the real button once.
+- Test steps 5 and 6 in section 7 stay open for the same reason.
