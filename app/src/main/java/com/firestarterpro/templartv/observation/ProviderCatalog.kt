@@ -42,6 +42,14 @@ object ProviderCatalog {
 
     fun packagesFor(provider: String): List<String> = entries.filter { it.provider == provider }.map { it.packageName }
 
+    /**
+     * Providers whose MediaSession title is only the episode name, with no show name in any field
+     * (measured on the owner's Streamer: Peacock publishes title and display title = episode name,
+     * plus duration, and nothing else readable). A title like that is not enough to name a shelf
+     * tile, so it goes to the review queue.
+     */
+    fun titleIsEpisodeNameOnly(provider: String): Boolean = provider == ProviderIds.PEACOCK
+
     /** Display name used to reject metadata that is only the app's own name. */
     fun displayName(provider: String): String = when (provider) {
         ProviderIds.PEACOCK -> "Peacock"

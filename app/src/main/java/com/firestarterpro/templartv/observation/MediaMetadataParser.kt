@@ -67,6 +67,8 @@ object MediaMetadataParser {
     /** Confidence when there is no marker but a second field might be the show name. */
     private const val AMBIGUOUS = 0.7f
     private const val NO_SERIES = 0.85f
+    /** Low enough that even "opened from Templar" (0.5) cannot lift it past the confirm line: a person names the show. */
+    private const val EPISODE_NAME_ONLY = 0.55f
 
     private val placeholders = setOf(
         "advertisement", "ad", "ads", "commercial", "sponsored", "loading", "untitled",
@@ -88,7 +90,7 @@ object MediaMetadataParser {
     private val seasonOnly = Regex("""\bSeason\s+(\d{1,2})\b""", RegexOption.IGNORE_CASE)
     private val separators = " -–—:|,·•.\t"
 
-    fun parse(raw: RawMetadata, providerName: String): ParseResult {
+    fun parse(raw: RawMetadata, providerName: String, titleIsEpisodeOnly: Boolean = false): ParseResult {
         // Some apps put their own name in one title field (Prime Video publishes "PrimeVideo") and
         // the real title in the other, so take the first one that is not the app's name.
         val candidates = listOf(clean(raw.title), clean(raw.displayTitle)).filter { it.isNotBlank() }
@@ -126,6 +128,13 @@ object MediaMetadataParser {
                 seasonNumber = raw.discNumber.toIntOrZero(), episodeNumber = raw.trackNumber.toIntOrZero(),
                 contentType = "episode", confidence = AMBIGUOUS, fields = "title+album",
                 providerContentId = id, artworkRef = art, runtimeMs = raw.durationMs,
+            )
+        }
+        if (titleIsEpisodeOnly) {
+            // The app is known to publish just an episode name here ("Pilot"), which many shows share.
+            return ParseResult.Parsed(
+                title = title, episodeTitle = title, contentType = "episode", confidence = EPISODE_NAME_ONLY,
+                fields = "title(episode name only)", providerContentId = id, artworkRef = art, runtimeMs = raw.durationMs,
             )
         }
         return ParseResult.Parsed(

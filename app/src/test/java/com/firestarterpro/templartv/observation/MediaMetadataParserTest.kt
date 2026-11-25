@@ -66,6 +66,16 @@ class MediaMetadataParserTest {
         assertEquals(0.85f, p.confidence, 0f)
     }
 
+    @Test fun episodeNameOnlyProvidersNeverConfirmOnTheirOwn() {
+        // Real Peacock behaviour: title = display title = episode name, nothing else readable.
+        val p = (MediaMetadataParser.parse(RawMetadata(title = "Pilot", displayTitle = "Pilot", durationMs = 2_700_000), "Peacock", titleIsEpisodeOnly = true)
+            as ParseResult.Parsed)
+        assertEquals("Pilot", p.episodeTitle)
+        assertEquals("episode", p.contentType)
+        // Even with the "opened from Templar" signal (0.5) the combined score stays under 0.80.
+        assertTrue(1 - (1 - p.confidence) * (1 - 0.5f) < 0.80f)
+    }
+
     @Test fun distinctAlbumWithoutMarkerIsLowConfidenceEpisode() {
         val p = parsed(RawMetadata(title = "The Name", album = "Test Show"))
         assertEquals("Test Show", p.seriesTitle)
