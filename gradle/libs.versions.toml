@@ -16,6 +16,7 @@ ksp = "2.0.21-1.0.25"
 junit = "4.13.2"
 robolectric = "4.12.2"
 androidxTestCore = "1.5.0"
+orgJson = "20240303"
 
 flagWatchHistory = "1.0.0"
 flagMediaSessionObservation = "1.0.0"
@@ -58,6 +59,7 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
 [plugins]
