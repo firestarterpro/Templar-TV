@@ -11,9 +11,11 @@
 - Capture default off, per the platform findings (filtering reportedly breaks hold-to-repeat volume).
 - Google Home stays reachable: long-press Home and the dashboard are untouched while capture is off.
 
-## Not done here
-- The owner's uncommitted Google Home quick-access edits (`QuickSettingsPanel.kt`, `GoogleHomeHandoff.kt`, plus untracked handoffs) live only on the owner's PC and were not reachable from the cloud. Commit them on top of this branch. This branch adds a "Features" tile to `QuickSettingsPanel.kt`, so expect a small merge there.
-- No Android SDK in the cloud container: not compiled locally; CI build is the check.
+## Owner's local Google Home edits (carried in)
+Committed from the owner's PC folder, line endings normalized to LF: `GoogleHomeHandoff.kt` (open Google Home by launch intent, returns success), `QuickSettingsPanel.kt` ("Launcher & rollback" section with Open Google Home and a Return to Google TV Home guide, Templar TV naming), plus the two untracked handoffs `2026-11-22-templar-tv-google-home-quick-access.md` and `templar-tv-status.md`. The cloud could not stage the two deeply nested source files, so their diffs were re-applied by hand; the diff size matches the local one (21 and 49 lines). Nothing on the PC was changed. The Features tile sits just above "Reload Templar TV".
+
+## Not compiled here
+No Android SDK in the cloud container: CI is the check.
 
 ## Rollback
 Revert this PR. Flag values live in `shared_prefs/templar_feature_flags.xml` and can be cleared with `adb shell pm clear com.firestarterpro.templartv` (resets launcher data too).

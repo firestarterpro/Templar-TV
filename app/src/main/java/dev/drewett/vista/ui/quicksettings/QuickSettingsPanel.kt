@@ -54,6 +54,7 @@ import androidx.tv.material3.Text
 import com.firestarterpro.templartv.R
 import com.firestarterpro.templartv.data.notifications.NotificationRepository
 import com.firestarterpro.templartv.domain.ThemeMode
+import com.firestarterpro.templartv.google.GoogleHomeHandoff
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -97,6 +98,8 @@ private fun PanelContent(themeMode: ThemeMode, onCycleTheme: () -> Unit, onDismi
     var outputs by remember { mutableStateOf<List<com.firestarterpro.templartv.data.system.AudioOutput>>(emptyList()) }
     var showBt by remember { mutableStateOf(false) }
     var btDevices by remember { mutableStateOf<List<com.firestarterpro.templartv.data.system.BtDevice>>(emptyList()) }
+    var showLauncherGuide by remember { mutableStateOf(false) }
+    var googleHomeUnavailable by remember { mutableStateOf(false) }
 
     fun open(action: String) {
         runCatching { context.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
@@ -163,6 +166,48 @@ private fun PanelContent(themeMode: ThemeMode, onCycleTheme: () -> Unit, onDismi
             GridTile("Screensaver", R.drawable.ic_screensaver) { open("android.settings.DREAM_SETTINGS") }
             GridTile("Date & time", R.drawable.ic_clock) { open(Settings.ACTION_DATE_SETTINGS) }
         }
+        SubHeader("Launcher & rollback")
+        Tile("Open Google Home", "Open", null, Modifier.fillMaxWidth()) {
+            if (GoogleHomeHandoff.openGoogleHome(context)) {
+                onDismiss()
+            } else {
+                googleHomeUnavailable = true
+            }
+        }
+        if (googleHomeUnavailable) {
+            Hint("Google Home is not available on this device.")
+        }
+        Tile(
+            "Return to Google TV Home",
+            if (showLauncherGuide) "Hide guide" else "Guide",
+            null,
+            Modifier.fillMaxWidth(),
+        ) {
+            showLauncherGuide = !showLauncherGuide
+        }
+        if (showLauncherGuide) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant, TileShape)
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    "Switch launchers any time",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    "Templar TV leaves Google TV Home installed. Press HOME and select Google TV Home, or open Settings > Apps > Default apps > Home app and choose Google TV Home.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                )
+                Tile("Open Android settings", "Open", R.drawable.ic_settings, Modifier.fillMaxWidth()) {
+                    open(Settings.ACTION_SETTINGS)
+                }
+            }
+        }
         Tile("Features", "On / off", R.drawable.ic_settings, Modifier.fillMaxWidth()) {
             runCatching {
                 context.startActivity(
@@ -172,7 +217,7 @@ private fun PanelContent(themeMode: ThemeMode, onCycleTheme: () -> Unit, onDismi
             }
             onDismiss()
         }
-        Tile("Reload Vista", "", R.drawable.ic_reload, Modifier.fillMaxWidth()) {
+        Tile("Reload Templar TV", "", R.drawable.ic_reload, Modifier.fillMaxWidth()) {
             (context as? android.app.Activity)?.recreate()
             onDismiss()
         }
@@ -207,7 +252,7 @@ private fun PanelContent(themeMode: ThemeMode, onCycleTheme: () -> Unit, onDismi
         }
 
         Text(
-            "Vista ${appVersion(context)}",
+            "Templar TV ${appVersion(context)}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
             modifier = Modifier.padding(top = 16.dp),
