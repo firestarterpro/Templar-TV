@@ -1,5 +1,6 @@
 package com.firestarterpro.templartv.companion
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -9,9 +10,9 @@ import com.firestarterpro.templartv.FeatureFlags
 import com.firestarterpro.templartv.Flag
 import com.firestarterpro.templartv.QuickSettingsActivity
 import com.firestarterpro.templartv.data.TemplarData
-import com.firestarterpro.templartv.data.apps.AppRepository
 import com.firestarterpro.templartv.data.favourites.FavouritesRepository
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.Inet4Address
@@ -40,7 +41,6 @@ private class PrefsPairedDeviceStore(context: Context) : PairedDeviceStore {
 }
 
 private class AndroidCompanionHost(private val context: Context) : CompanionHost {
-    private val apps = AppRepository(context)
     private val favourites = FavouritesRepository(context)
 
     override val appVersion: String =
@@ -48,21 +48,48 @@ private class AndroidCompanionHost(private val context: Context) : CompanionHost
 
     override fun historyEnabled() = FeatureFlags.isEnabled(context, Flag.COMPANION_HISTORY)
 
+    private val pm = context.packageManager
+
+    private data class Launchable(val packageName: String, val component: ComponentName, val label: String, val leanback: Boolean)
+
+    /**
+     * Launchable apps without icons or banners. AppRepository.loadApps() decodes every app's art, which
+     * takes seconds on the Streamer and made companion calls time out on the tablet.
+     */
+    private fun launchables(): List<Launchable> {
+        val out = LinkedHashMap<String, Launchable>()
+        for ((category, leanback) in listOf(Intent.CATEGORY_LEANBACK_LAUNCHER to true, Intent.CATEGORY_LAUNCHER to false)) {
+            pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(category), 0).forEach { ri ->
+                val a = ri.activityInfo ?: return@forEach
+                if (a.packageName == context.packageName || out.containsKey(a.packageName)) return@forEach
+                out[a.packageName] = Launchable(a.packageName, ComponentName(a.packageName, a.name), ri.loadLabel(pm).toString(), leanback)
+            }
+        }
+        return out.values.sortedBy { it.label.lowercase() }
+    }
+
+    private fun isLaunchable(packageName: String) =
+        pm.getLeanbackLaunchIntentForPackage(packageName) != null || pm.getLaunchIntentForPackage(packageName) != null
+
     override suspend fun apps(): List<CompanionApp> {
         val favs = favourites.favourites.first()
-        return apps.loadApps().map { CompanionApp(it.packageName, it.label, it.packageName in favs, it.isLeanback) }
+        return launchables().map { CompanionApp(it.packageName, it.label, it.packageName in favs, it.leanback) }
     }
 
     override suspend fun setFavouriteApp(packageName: String, favourite: Boolean): Boolean {
-        if (apps.loadApps().none { it.packageName == packageName }) return false
+        if (packageName == context.packageName || !isLaunchable(packageName)) return false
         val isFav = packageName in favourites.favourites.first()
         if (isFav != favourite) favourites.toggle(packageName)
         return true
     }
 
     override fun launch(packageName: String): Boolean? {
-        val entry = apps.loadApps().firstOrNull { it.packageName == packageName } ?: return null
-        apps.launch(entry)
+        if (packageName == context.packageName) return null
+        val intent = (pm.getLeanbackLaunchIntentForPackage(packageName) ?: pm.getLaunchIntentForPackage(packageName))
+            ?: return null
+        runCatching {
+            context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED))
+        }
         return mayBeBlocked()
     }
 
@@ -120,6 +147,9 @@ object CompanionController {
         if (on && server == null) {
             val router = CompanionRouter(pairing(context), TemplarData.get(context).sync, AndroidCompanionHost(context))
             val s = CompanionServer(router)
+            // The home rows only exist once the default profile is seeded; nothing else does that yet,
+            // so the companion would otherwise list no rows. Idempotent, never touches edited rows.
+            Thread({ runCatching { runBlocking { TemplarData.get(context).profiles.ensureDefault() } } }, "companion-seed").start()
             runCatching { s.start() }
                 .onSuccess { server = s }
                 .onFailure { Log.w(TAG, "Companion server did not start: ${it.javaClass.simpleName}") }
