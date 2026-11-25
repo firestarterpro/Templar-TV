@@ -113,6 +113,10 @@ A single Gradle module under `dev.drewett.vista`:
 - adb-granted permissions are per-device. Without them, the corresponding tiles fall back to opening
   system Settings.
 
+## Companion app
+
+- **[Templar Tablet](https://github.com/firestarterpro/Templar-Tablet)** — Dedicated native Kotlin/Compose tablet companion (TV & Media remote/library/organize surface, PC Control/Observatory surface, RetroArch gaming hub, and offline reader). Companion sync APIs between Templar Tablet and Templar TV are planned separately and are not yet implemented in this repo.
+
 ## License
 
 [MIT](LICENSE).
