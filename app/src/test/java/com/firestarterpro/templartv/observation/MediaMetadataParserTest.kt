@@ -92,6 +92,16 @@ class MediaMetadataParserTest {
         assertEquals(SkipReason.AD_OR_PLACEHOLDER, skipped(RawMetadata(title = "Loading")))
     }
 
+    @Test fun appNameWithoutSpacesIsStillTheAppName() {
+        // Real Prime Video behaviour: the description title is "PrimeVideo".
+        assertEquals(SkipReason.APP_NAME, skipped(RawMetadata(title = "PrimeVideo"), "Prime Video"))
+    }
+
+    @Test fun realTitleInTheOtherTitleFieldIsUsed() {
+        val p = parsed(RawMetadata(title = "PrimeVideo", displayTitle = "Some Movie"), "Prime Video")
+        assertEquals("Some Movie", p.title)
+    }
+
     @Test fun shortItemsAreNotShelfMaterial() {
         assertEquals(SkipReason.TOO_SHORT, skipped(RawMetadata(title = "Some Trailer Clip", durationMs = 30_000)))
         // Unknown duration (0) is allowed through: some apps never report it.
