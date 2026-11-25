@@ -51,6 +51,14 @@ class PlaybackTrackerTest {
         assertEquals(1, r.size)
     }
 
+    @Test fun staleStopPositionIsNotAViewing() {
+        // Real Peacock behaviour: idle session, metadata appears, state STOPPED, old position kept.
+        assertTrue(records(tracker.onSnapshot(p, snap(0, PlayState.STOPPED, 2_597_381))).isEmpty())
+        assertTrue(records(tracker.onSnapshot(p, snap(2_000, PlayState.BUFFERING, 0))).isEmpty())
+        assertTrue(records(tracker.onSnapshot(p, snap(4_000, PlayState.PLAYING, 8_000))).isEmpty())
+        assertEquals(1, records(tracker.onSnapshot(p, snap(50_000, PlayState.PLAYING, 54_000))).size)
+    }
+
     @Test fun heartbeatSavesPositionEveryMinuteOnly() {
         tracker.onSnapshot(p, snap(0, pos = 600_000))             // qualifies, recorded
         assertTrue(records(tracker.onSnapshot(p, snap(30_000, pos = 630_000))).isEmpty())
@@ -84,6 +92,14 @@ class PlaybackTrackerTest {
         val back = records(tracker.onSnapshot(p, snap(40_000, pos = 610_000)))
         assertTrue(back.none { it.playbackState == "stopped" })
         assertTrue(tracker.activeKeys().contains(key))
+    }
+
+    @Test fun metadataClearedAtStopStillSavesTheStopPosition() {
+        // Real Peacock behaviour: metadata is emptied when playback stops, position stays.
+        tracker.onSnapshot(p, snap(0, pos = 600_000))
+        val r = records(tracker.onSnapshot(p, snap(5_000, PlayState.STOPPED, 640_000, md = null)))
+        assertEquals(640_000L, r.single().positionMs)
+        assertEquals("Test Show", r.single().title)
     }
 
     @Test fun noMetadataEndsTheTrack() {

@@ -89,9 +89,12 @@ object MediaMetadataParser {
     private val separators = " -–—:|,·•.\t"
 
     fun parse(raw: RawMetadata, providerName: String): ParseResult {
-        val title = clean(raw.title).ifBlank { clean(raw.displayTitle) }
-        if (title.isBlank()) return ParseResult.Skipped(SkipReason.NO_TITLE)
-        if (isAppName(title, providerName)) return ParseResult.Skipped(SkipReason.APP_NAME)
+        // Some apps put their own name in one title field (Prime Video publishes "PrimeVideo") and
+        // the real title in the other, so take the first one that is not the app's name.
+        val candidates = listOf(clean(raw.title), clean(raw.displayTitle)).filter { it.isNotBlank() }
+        if (candidates.isEmpty()) return ParseResult.Skipped(SkipReason.NO_TITLE)
+        val title = candidates.firstOrNull { !isAppName(it, providerName) }
+            ?: return ParseResult.Skipped(SkipReason.APP_NAME)
         if (isPlaceholder(title)) return ParseResult.Skipped(SkipReason.AD_OR_PLACEHOLDER)
         if (raw.durationMs in 1 until MIN_FEATURE_MS) return ParseResult.Skipped(SkipReason.TOO_SHORT)
 
@@ -192,9 +195,10 @@ object MediaMetadataParser {
     private fun same(a: String, b: String) = DedupeKey.normalize(a) == DedupeKey.normalize(b)
 
     private fun isAppName(text: String, providerName: String): Boolean {
-        val n = DedupeKey.normalize(text)
-        val p = DedupeKey.normalize(providerName)
-        return n.isEmpty() || n == p || n == "$p tv" || n == "$p app"
+        // Spaces are ignored: "Prime Video", "PrimeVideo" and "primevideo" are the same name.
+        val n = DedupeKey.normalize(text).replace(" ", "")
+        val p = DedupeKey.normalize(providerName).replace(" ", "")
+        return n.isEmpty() || n == p || n == p + "tv" || n == p + "app"
     }
 
     private fun isPlaceholder(text: String): Boolean =

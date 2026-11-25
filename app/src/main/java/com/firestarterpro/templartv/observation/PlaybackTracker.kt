@@ -75,7 +75,12 @@ class PlaybackTracker(
 
     fun onSnapshot(profileId: String, s: SessionSnapshot): List<TrackerEvent> {
         val meta = s.metadata
-        if (meta == null) return finish(profileId, s.sessionKey, s.at, "no metadata")
+        if (meta == null) {
+            // Peacock clears its metadata the moment it stops, but the stop position is still in
+            // the playback state. Keep the last known title and take the newer position from it.
+            tracks[s.sessionKey]?.let { t -> if (s.positionMs > 0) t.last = t.last.copy(positionMs = s.positionMs) }
+            return finish(profileId, s.sessionKey, s.at, "no metadata")
+        }
         val parsed = when (val r = MediaMetadataParser.parse(meta, ProviderCatalog.displayName(s.provider))) {
             is ParseResult.Skipped -> {
                 // An ad or placeholder in the middle of a show must not end the show's track, and
@@ -111,7 +116,10 @@ class PlaybackTracker(
         track.last = s
         track.parsed = parsed
 
-        val startsFarIn = s.state != PlayState.BUFFERING && s.positionMs >= config.minResumePositionMs
+        // Resuming far in counts only while actually playing or paused. A stopped session keeps its
+        // old position (Peacock shows the last episode's 43 minutes at idle), which is not a viewing.
+        val startsFarIn = (s.state == PlayState.PLAYING || s.state == PlayState.PAUSED) &&
+            s.positionMs >= config.minResumePositionMs
         val justQualified = !track.qualified && (track.playedMs >= config.minPlayMs || startsFarIn)
         if (justQualified) track.qualified = true
         if (!track.qualified) {
