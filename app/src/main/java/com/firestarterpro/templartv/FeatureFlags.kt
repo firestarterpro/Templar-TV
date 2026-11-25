@@ -38,6 +38,23 @@ enum class Flag(
         "Open Templar's quick menu from the remote's Settings key in any app. Off keeps Google's dashboard (and its Google Home panel) on that key. Needs the accessibility service on.",
         experimental = true,
     ),
+    HOME_RETURN(
+        "home_return", false, "Home opens Templar",
+        "On Google TV Streamer the Home key can still open Google's launcher. When on, Templar brings itself back on top after a short Home press. Long-press Home (the Google Home dashboard) is left alone. Needs the accessibility service on and Templar set as Home app.",
+        experimental = true,
+    ),
+    STAR_KEY_CAPTURE(
+        "star_key_capture", false, "Capture star button",
+        "Claim the remote's star button so Google's smart-home screen doesn't open, and run the action you pick under Star button action. Needs the accessibility service on.",
+        experimental = true,
+    ),
+}
+
+/** What the remote's star button does while [Flag.STAR_KEY_CAPTURE] is on. */
+enum class StarAction(val key: String, val label: String) {
+    QUICK_MENU("quick_menu", "Templar quick menu"),
+    TEMPLAR_HOME("templar_home", "Templar home screen"),
+    GOOGLE_DEFAULT("google_default", "Leave it to Google"),
 }
 
 object FeatureFlags {
@@ -52,6 +69,15 @@ object FeatureFlags {
 
     fun set(context: Context, flag: Flag, enabled: Boolean) {
         prefs(context).edit().putBoolean(flag.key, enabled).apply()
+    }
+
+    fun starAction(context: Context): StarAction {
+        val stored = runCatching { prefs(context).getString("star_action", null) }.getOrNull()
+        return StarAction.entries.firstOrNull { it.key == stored } ?: StarAction.QUICK_MENU
+    }
+
+    fun setStarAction(context: Context, action: StarAction) {
+        prefs(context).edit().putString("star_action", action.key).apply()
     }
 
     /** Back to the built-in default (removes the stored override). */
