@@ -117,16 +117,13 @@ Five things in the plan are promised more firmly than the platform supports. Non
 - **Keyboard:** the owner thinks the handheld keyboard supports both Bluetooth and a USB dongle, model to be confirmed. Either works for the plan. Bluetooth needs no hub.
 - **TMDB key:** the owner agreed to it.
 
-## 5. Questions for the owner
+## 5. Decisions (no open questions)
 
-Percentages are Claude's estimates of benefit toward "seamless, toggleable features".
+The owner asked Claude to decide these on 2026-11-25. All three are settings, so they can be changed later.
 
-1. **If the remote mic does not feed Templar's own recognizer, which voice fallback do you want?** (ranked)
-   - a. Google's speech pop-up that returns the text to Templar, so results still show in Templar. About 70%.
-   - b. Typing only, on the handheld keyboard or on-screen keyboard. About 40%.
-   - c. Drop Templar voice and let Gemini handle spoken search. About 15%.
-2. **The star button: decided by the owner on 2026-11-25.** "Let me choose in the app and change it." The star-button action becomes a Templar setting. See section 4a. No question remains.
-3. **Global keyboard shortcuts inside other apps need the key filter that may break hold-to-repeat volume. Ship them? (yes / no / test first)** Recommendation: test first, default off. About 60% if the volume test passes, near 0% if it fails.
+1. **Voice fallback.** Templar tries its own recognizer first. If the remote mic does not feed it, Templar uses Google's speech pop-up and shows the results in Templar. Typing always works. The owner picked this option.
+2. **Star button.** A Templar setting, as in section 4a. Default action: the Templar quick menu, with Google Home one tile away.
+3. **Global shortcuts in other apps.** Off by default. Turned on only after the hold-volume test passes on the physical remote. Shortcuts inside Templar ship regardless. Decided by Claude.
 
 ## 6. Sources read on 2026-11-25
 
