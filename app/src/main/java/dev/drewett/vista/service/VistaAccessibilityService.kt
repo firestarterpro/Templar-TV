@@ -102,10 +102,13 @@ class VistaAccessibilityService : AccessibilityService() {
             return
         }
         if (pkg == HomeGuard.GOOGLE_LAUNCHER_PACKAGE) {
-            // Dashboard / Google Home panel / any other Google launcher window: hands off.
-            lastOtherGoogleWindowAt = SystemClock.elapsedRealtime()
-            frontIsGoogleHome = false
-            handler.removeCallbacks(bounceRunnable)
+            // Google's dashboard (long-press Home, with the Google Home panel): hands off.
+            // Other launcher windows (for example the overlay it shows while apps open) are ignored.
+            if (cls?.contains("dashboard", ignoreCase = true) == true) {
+                lastOtherGoogleWindowAt = SystemClock.elapsedRealtime()
+                frontIsGoogleHome = false
+                handler.removeCallbacks(bounceRunnable)
+            }
             return
         }
         // Some other app (or Templar) took the front.

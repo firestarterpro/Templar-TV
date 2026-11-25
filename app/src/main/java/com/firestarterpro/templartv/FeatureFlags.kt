@@ -44,8 +44,8 @@ enum class Flag(
         experimental = true,
     ),
     STAR_KEY_CAPTURE(
-        "star_key_capture", false, "Capture star button",
-        "Claim the remote's star button so Google's smart-home screen doesn't open, and run the action you pick under Star button action. Needs the accessibility service on.",
+        "star_key_capture", false, "Capture star button (not working on Streamer)",
+        "Tested on Google TV Streamer: Google treats the star button as a global key, so an accessibility service never receives it and this has no effect there. Kept for other devices.",
         experimental = true,
     ),
 }

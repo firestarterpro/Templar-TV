@@ -22,7 +22,10 @@ No Android SDK in the cloud, so the build and device checks run on the PC. See t
 - Star does **not** work: `KEYCODE_MACRO_1` is registered as a global key (`dumpsys window policy`: `KEYCODE_MACRO_1=launcherx/.remotecontrol.GlobalKeyListener_Receiver`). The window policy consumes global keys before the accessibility KeyboardInterceptor hands them to services, so Templar never receives it and dreamx `SmartHomeMainActivity` opens. An accessibility service cannot claim this key on this device. Options: drop the flag, or a window-based fallback (watch for SmartHomeMainActivity and open Templar's menu over it, with a flash, and an allow window for Templar's own "Open Google Home").
 - Volume hold-to-repeat with key filtering on can't be checked with `input keyevent` (no real hold). That keeps `star_key_capture` off by default.
 - Flags off: Home stays on Google's HomeActivity, star opens Smart Home, no `TemplarHomeGuard` lines.
-- Small edge case seen: launcherx shows a `FrameLayout` overlay window when other apps open, which counts as "other Google window" for 1.5 s. A Home press within 1.5 s of opening an app could skip the bounce.
+- Edge case seen and fixed after the test: launcherx shows a `FrameLayout` overlay window when other apps open, which counted as an "other Google window" for 1.5 s and could skip the bounce. Now only windows whose class contains "dashboard" count; other launcherx windows are ignored. (Compiled by CI only; not re-run on the TV.)
+
+## Decision on the star button
+No accessibility-service route works on the Streamer, and the window-based fallback (react to `SmartHomeMainActivity`) can't tell the star key from a deliberate Google Home open, which would risk the Google Home path the owner wants kept. So it is not built. The flag stays off by default and is labelled as not working on the Streamer. The remaining option is Google's own star remap picker (launcherx magic button), which is a Google setting.
 
 ## Rollback
 - Switch the flags off in Quick menu → Features (applies immediately), or `adb shell pm clear com.firestarterpro.templartv`.
