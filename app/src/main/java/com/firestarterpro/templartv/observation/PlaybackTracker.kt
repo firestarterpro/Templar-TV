@@ -119,7 +119,8 @@ class PlaybackTracker(
             return out
         }
         val heartbeatDue = s.state == PlayState.PLAYING && s.at - track.lastRecordAt >= config.heartbeatMs
-        if (justQualified || heartbeatDue || (stateChanged && track.lastRecordAt > 0)) {
+        // A qualified track was already recorded when it qualified, so any state change is a new record.
+        if (justQualified || heartbeatDue || stateChanged) {
             out += TrackerEvent.Record(observation(profileId, track, s.at, s.state))
             track.lastRecordAt = s.at
         }
