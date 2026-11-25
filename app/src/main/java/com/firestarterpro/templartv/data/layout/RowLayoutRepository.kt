@@ -4,6 +4,7 @@ import androidx.room.RoomDatabase
 import androidx.room.withTransaction
 import com.firestarterpro.templartv.Flag
 import com.firestarterpro.templartv.data.FlagGate
+import com.firestarterpro.templartv.data.Ordering
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -47,6 +48,19 @@ class RowLayoutRepository(
             ids.removeAt(from)
             ids.add(toIndex.coerceIn(0, ids.size), rowId)
             ids.forEachIndexed { index, id -> dao.setPosition(profileId, id, index, now) }
+            true
+        }
+    }
+
+    suspend fun get(profileId: String, rowId: String): RowLayoutEntry? = dao.get(profileId, rowId)
+
+    /** Applies an order sent by another device. Listed rows come first; the rest keep their order after. */
+    suspend fun reorder(profileId: String, orderedRowIds: List<String>): Boolean {
+        if (!gate.isOn(Flag.ROW_MANAGER)) return false
+        val now = clock()
+        return db.withTransaction {
+            val current = dao.all(profileId).map { it.rowId }
+            Ordering.applyOrder(current, orderedRowIds).forEachIndexed { index, id -> dao.setPosition(profileId, id, index, now) }
             true
         }
     }

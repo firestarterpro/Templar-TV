@@ -7,6 +7,7 @@ import com.firestarterpro.templartv.data.DedupeKey
 import com.firestarterpro.templartv.data.FlagGate
 import com.firestarterpro.templartv.data.Ordering
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 /** What a caller knows about a title when it puts it on a shelf. */
 data class ShelfDraft(
@@ -59,7 +60,7 @@ class ShelfRepository(
      * or a launch from Templar is the user choosing it, so those bring it back.
      * Returns the shelf entry id, or null when nothing was written.
      */
-    suspend fun record(profileId: String, provider: String, source: ShelfSource, draft: ShelfDraft): Long? {
+    suspend fun record(profileId: String, provider: String, source: ShelfSource, draft: ShelfDraft, syncId: String? = null): Long? {
         if (!gate.isOn(Flag.PROVIDER_RECENT_SHELVES)) return null
         if (draft.title.isBlank() && draft.seriesTitle.isBlank()) return null
         val now = clock()
@@ -70,6 +71,7 @@ class ShelfRepository(
             if (existing == null) {
                 dao.insert(
                     ShelfEntry(
+                        syncId = syncId ?: UUID.randomUUID().toString(),
                         profileId = profileId, provider = provider, dedupeKey = key,
                         title = draft.title.ifBlank { draft.seriesTitle },
                         seriesTitle = draft.seriesTitle, contentType = draft.contentType,
@@ -118,9 +120,47 @@ class ShelfRepository(
     }
 
     /** The user adds a show to a shelf by hand ("Add a show"). Counts as confirmed. */
-    suspend fun addManual(profileId: String, provider: String, draft: ShelfDraft): Long? {
+    suspend fun addManual(profileId: String, provider: String, draft: ShelfDraft, syncId: String? = null): Long? {
         if (!gate.isOn(Flag.SHELF_EDITING)) return null
-        return record(profileId, provider, ShelfSource.MANUAL, draft)
+        return record(profileId, provider, ShelfSource.MANUAL, draft, syncId)
+    }
+
+    suspend fun getById(id: Long): ShelfEntry? = dao.get(id)
+
+    /** Changes the descriptive fields of a tile (title, ids, links, artwork). Blank values are left as they are. */
+    suspend fun updateDetails(id: Long, draft: ShelfDraft): Boolean {
+        if (!gate.isOn(Flag.SHELF_EDITING)) return false
+        val e = dao.get(id) ?: return false
+        dao.update(
+            e.copy(
+                title = draft.title.ifBlank { e.title },
+                seriesTitle = draft.seriesTitle.ifBlank { e.seriesTitle },
+                contentType = draft.contentType.ifBlank { e.contentType },
+                providerContentId = draft.providerContentId.ifBlank { e.providerContentId },
+                deepLink = draft.deepLink.ifBlank { e.deepLink },
+                tmdbId = if (draft.tmdbId > 0) draft.tmdbId else e.tmdbId,
+                imdbId = draft.imdbId.ifBlank { e.imdbId },
+                artworkRef = draft.artworkRef.ifBlank { e.artworkRef },
+                updatedAt = clock(),
+            ),
+        )
+        return true
+    }
+
+    /**
+     * Applies an order sent by another device. The listed visible tiles come first, in that order;
+     * the rest keep their relative order after them.
+     */
+    suspend fun reorder(profileId: String, provider: String, orderedSyncIds: List<String>): Boolean {
+        if (!gate.isOn(Flag.SHELF_EDITING)) return false
+        val now = clock()
+        return db.withTransaction {
+            val visible = dao.visible(profileId, provider)
+            val bySync = visible.associateBy { it.syncId }
+            val desired = orderedSyncIds.mapNotNull { bySync[it]?.id }
+            Ordering.applyOrder(visible.map { it.id }, desired).forEachIndexed { index, entryId -> dao.setPosition(entryId, index, now) }
+            true
+        }
     }
 
     /** Moves a visible tile to [toIndex] in what the shelf shows. Returns false if nothing moved. */

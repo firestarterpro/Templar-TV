@@ -7,6 +7,8 @@ import com.firestarterpro.templartv.data.profile.ActiveProfileStore
 import com.firestarterpro.templartv.data.profile.ProfileRepository
 import com.firestarterpro.templartv.data.shelf.ShelfRepository
 import com.firestarterpro.templartv.data.shortcuts.ShortcutRepository
+import com.firestarterpro.templartv.data.sync.SyncStore
+import com.firestarterpro.templartv.data.sync.TemplarSyncStore
 import com.firestarterpro.templartv.data.watchhistory.WatchHistoryRepository
 
 /**
@@ -22,6 +24,8 @@ class TemplarData private constructor(
     val rows: RowLayoutRepository,
     val shortcuts: ShortcutRepository,
     val history: WatchHistoryRepository,
+    /** For the companion server (Templar Tablet). Same repositories and flags as the TV UI. */
+    val sync: SyncStore,
 ) {
     companion object {
         @Volatile
@@ -44,14 +48,16 @@ class TemplarData private constructor(
         ): TemplarData {
             val shelves = ShelfRepository(db, db.shelfDao(), gate, clock)
             val rows = RowLayoutRepository(db, db.rowLayoutDao(), gate, clock)
+            val favourites = FavouriteShowRepository(db, db.favouriteShowDao(), gate, clock)
             return TemplarData(
                 database = db,
                 profiles = ProfileRepository(db, db.profileDao(), db.profileSettingDao(), rows, activeStore, clock),
                 shelves = shelves,
-                favourites = FavouriteShowRepository(db, db.favouriteShowDao(), gate, clock),
+                favourites = favourites,
                 rows = rows,
                 shortcuts = ShortcutRepository(db.shortcutDao(), gate, clock),
                 history = WatchHistoryRepository(db, db.watchHistoryDao(), shelves, gate, clock),
+                sync = TemplarSyncStore(db.profileDao(), favourites, shelves, rows, clock),
             )
         }
     }

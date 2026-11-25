@@ -89,6 +89,9 @@ interface FavouriteShowDao {
     @Query("UPDATE favourite_shows SET preferred_provider = :provider, updated_at = :at WHERE id = :id")
     suspend fun setPreferredProvider(id: Long, provider: String, at: Long)
 
+    @Query("SELECT * FROM favourite_shows WHERE id = :id")
+    suspend fun getById(id: Long): FavouriteShow?
+
     @Query("SELECT * FROM favourite_shows WHERE sync_id = :syncId")
     suspend fun getBySync(syncId: String): FavouriteShow?
 

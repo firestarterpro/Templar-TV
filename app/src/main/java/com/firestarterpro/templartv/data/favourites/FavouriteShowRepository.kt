@@ -7,6 +7,7 @@ import com.firestarterpro.templartv.data.DedupeKey
 import com.firestarterpro.templartv.data.FlagGate
 import com.firestarterpro.templartv.data.Ordering
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 /** The ordered Favourite Shows list. Needs [Flag.FAVOURITE_SHOWS]; when off, writes do nothing. */
 class FavouriteShowRepository(
@@ -27,6 +28,7 @@ class FavouriteShowRepository(
         tvdbId: String = "",
         preferredProvider: String = "",
         artworkRef: String = "",
+        syncId: String? = null,
     ): Long? {
         if (!gate.isOn(Flag.FAVOURITE_SHOWS) || title.isBlank()) return null
         val key = DedupeKey.forFavourite(tmdbId, title)
@@ -37,6 +39,7 @@ class FavouriteShowRepository(
             if (existing == null) {
                 dao.insert(
                     FavouriteShow(
+                        syncId = syncId ?: UUID.randomUUID().toString(),
                         profileId = profileId, dedupeKey = key, title = title.trim(), tmdbId = tmdbId,
                         imdbId = imdbId, tvdbId = tvdbId, preferredProvider = preferredProvider,
                         artworkRef = artworkRef, position = top, addedAt = now, updatedAt = now,
@@ -59,6 +62,42 @@ class FavouriteShowRepository(
             val ids = dao.current(profileId).map { it.id }
             if (id !in ids) return@withTransaction false
             Ordering.moveTo(ids, id, toIndex).forEachIndexed { index, showId -> dao.setPosition(showId, index, now) }
+            true
+        }
+    }
+
+    suspend fun getById(id: Long): FavouriteShow? = dao.getById(id)
+
+    /** Changes title, ids, provider and artwork of a favourite. Blank values are left as they are. */
+    suspend fun updateDetails(
+        id: Long, title: String = "", tmdbId: Long = 0, imdbId: String = "", tvdbId: String = "",
+        preferredProvider: String? = null, artworkRef: String = "",
+    ): Boolean {
+        if (!gate.isOn(Flag.FAVOURITE_SHOWS)) return false
+        val f = dao.getById(id) ?: return false
+        dao.update(
+            f.copy(
+                title = title.ifBlank { f.title },
+                tmdbId = if (tmdbId > 0) tmdbId else f.tmdbId,
+                imdbId = imdbId.ifBlank { f.imdbId },
+                tvdbId = tvdbId.ifBlank { f.tvdbId },
+                preferredProvider = preferredProvider ?: f.preferredProvider,
+                artworkRef = artworkRef.ifBlank { f.artworkRef },
+                updatedAt = clock(),
+            ),
+        )
+        return true
+    }
+
+    /** Applies an order sent by another device. Listed favourites come first; the rest keep their order after. */
+    suspend fun reorder(profileId: String, orderedSyncIds: List<String>): Boolean {
+        if (!gate.isOn(Flag.FAVOURITE_SHOWS)) return false
+        val now = clock()
+        return db.withTransaction {
+            val current = dao.current(profileId)
+            val bySync = current.associateBy { it.syncId }
+            val desired = orderedSyncIds.mapNotNull { bySync[it]?.id }
+            Ordering.applyOrder(current.map { it.id }, desired).forEachIndexed { index, showId -> dao.setPosition(showId, index, now) }
             true
         }
     }
