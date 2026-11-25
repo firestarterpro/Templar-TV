@@ -105,6 +105,18 @@ Five things in the plan are promised more firmly than the platform supports. Non
 6. Add a new short thread, **S1 voice spike** (Sonnet, low): one mic button, three recorded outcomes, before B6 starts.
 7. Gap analysis table: "Override HOME reliably" moves from Nice to Need.
 
+## 4a. Owner decisions folded in (2026-11-25)
+
+- **Star button is a Templar setting.** Settings → Shortcuts → Star button, with a list such as: quick menu, voice search, favourite shows, a chosen app, or nothing. Changeable at any time, stored per profile, included in backup.
+- **Platform limit on that setting.** Templar can only choose the action if the star press reaches Templar. Two routes, best first:
+  1. In Google's own picker, map the star once to a tiny "Templar Button" companion app. Templar's setting then decides what that press opens. No key capture needed. Depends on sideloaded apps appearing in Google's list. [V]
+  2. Capture `MACRO_1` in the accessibility service. Depends on the volume test in 2.4. [V]
+- **Google Home on the star button** is Google's own shortcut type. Templar cannot set it. The setting should offer "Google Home (set in Google's remote settings)" and open Settings → Remotes & Accessories → Set up remote buttons for the owner. [E: Google help path]
+- Long-pressing the star stays Google's shortcut editor in every case.
+- B5 scope grows by the settings row and the companion app. B1 adds one check: does a sideloaded app appear in the star button's app list?
+- **Keyboard:** the owner thinks the handheld keyboard supports both Bluetooth and a USB dongle, model to be confirmed. Either works for the plan. Bluetooth needs no hub.
+- **TMDB key:** the owner agreed to it.
+
 ## 5. Questions for the owner
 
 Percentages are Claude's estimates of benefit toward "seamless, toggleable features".
@@ -113,10 +125,7 @@ Percentages are Claude's estimates of benefit toward "seamless, toggleable featu
    - a. Google's speech pop-up that returns the text to Templar, so results still show in Templar. About 70%.
    - b. Typing only, on the handheld keyboard or on-screen keyboard. About 40%.
    - c. Drop Templar voice and let Gemini handle spoken search. About 15%.
-2. **The star button: what should it do?** (ranked)
-   - a. Open the Templar quick menu through a small companion app, with Google Home one tile away inside the menu. About 85%.
-   - b. Stay on Google Home, and the quick menu opens from the keyboard only. About 45%.
-   - c. Open the quick menu through accessibility key capture. About 40%, because of the volume risk.
+2. **The star button: decided by the owner on 2026-11-25.** "Let me choose in the app and change it." The star-button action becomes a Templar setting. See section 4a. No question remains.
 3. **Global keyboard shortcuts inside other apps need the key filter that may break hold-to-repeat volume. Ship them? (yes / no / test first)** Recommendation: test first, default off. About 60% if the volume test passes, near 0% if it fails.
 
 ## 6. Sources read on 2026-11-25
