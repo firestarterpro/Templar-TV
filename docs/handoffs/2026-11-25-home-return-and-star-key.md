@@ -16,6 +16,14 @@ Logging: only window class names of Google's launcher and Templar (tag `TemplarH
 ## Verification
 No Android SDK in the cloud, so the build and device checks run on the PC. See the PR for results.
 
+### Device test 2026-11-25 (Google TV Streamer, adb input keyevent only)
+- First build compiled as-is. Short Home did **not** bounce: the log said `decision=false` with nothing else blocking. Cause: on the Streamer `cmd package resolve-activity -c HOME` still returns `launcherx/.home.HomeActivity` (priority=2) even while Templar holds `android.app.role.HOME`, so the `resolveActivity` check was always false. Fix: `templarIsHome()` now asks `RoleManager.isRoleHeld(ROLE_HOME)` first (API 29+), `resolveActivity` only as fallback. After the fix short Home from Settings lands on Templar `MainActivity` ~0.7 s after HomeActivity.
+- Long-press Home (`input keyevent --longpress KEYCODE_HOME`) goes straight to `launcherx/.dashboard.DashboardHandler`; HomeActivity never shows, so no bounce. A real remote long-press was not tested.
+- Star does **not** work: `KEYCODE_MACRO_1` is registered as a global key (`dumpsys window policy`: `KEYCODE_MACRO_1=launcherx/.remotecontrol.GlobalKeyListener_Receiver`). The window policy consumes global keys before the accessibility KeyboardInterceptor hands them to services, so Templar never receives it and dreamx `SmartHomeMainActivity` opens. An accessibility service cannot claim this key on this device. Options: drop the flag, or a window-based fallback (watch for SmartHomeMainActivity and open Templar's menu over it, with a flash, and an allow window for Templar's own "Open Google Home").
+- Volume hold-to-repeat with key filtering on can't be checked with `input keyevent` (no real hold). That keeps `star_key_capture` off by default.
+- Flags off: Home stays on Google's HomeActivity, star opens Smart Home, no `TemplarHomeGuard` lines.
+- Small edge case seen: launcherx shows a `FrameLayout` overlay window when other apps open, which counts as "other Google window" for 1.5 s. A Home press within 1.5 s of opening an app could skip the bounce.
+
 ## Rollback
 - Switch the flags off in Quick menu → Features (applies immediately), or `adb shell pm clear com.firestarterpro.templartv`.
 - Disable the service: `adb shell settings put secure enabled_accessibility_services ""` and `adb shell settings put secure accessibility_enabled 0` (only if nothing else used accessibility before; check the old value first).

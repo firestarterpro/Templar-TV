@@ -2,6 +2,8 @@ package com.firestarterpro.templartv.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.app.role.RoleManager
+import android.os.Build
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -113,6 +115,14 @@ class VistaAccessibilityService : AccessibilityService() {
     }
 
     private fun templarIsHome(): Boolean {
+        // On Google TV Streamer the HOME intent still resolves to launcherx (higher priority) even
+        // when Templar holds the HOME role, so ask RoleManager first.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val held = runCatching {
+                getSystemService(RoleManager::class.java)?.isRoleHeld(RoleManager.ROLE_HOME)
+            }.getOrNull()
+            if (held != null) return held
+        }
         val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         val resolved = runCatching {
             packageManager.resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY)
@@ -126,16 +136,22 @@ class VistaAccessibilityService : AccessibilityService() {
         val longPress = homeLongPressAt != 0L && now - homeLongPressAt < LONG_PRESS_MEMORY_MS
         val otherRecent = lastOtherGoogleWindowAt != 0L &&
             now - lastOtherGoogleWindowAt < HomeGuard.OTHER_WINDOW_MEMORY_MS
+        val isHome = templarIsHome()
+        val allowed = HomeGuard.isGoogleLauncherAllowed()
         val decision = HomeGuard.shouldBounce(
             now = now,
             googleHomeStillFront = frontIsGoogleHome,
             otherGoogleWindowRecent = otherRecent,
             homeLongPressSeen = longPress,
-            allowed = HomeGuard.isGoogleLauncherAllowed(),
-            templarIsHome = templarIsHome(),
+            allowed = allowed,
+            templarIsHome = isHome,
             pausedUntil = pausedUntil,
         )
-        Log.d(TAG, "bounce decision=$decision front=$frontIsGoogleHome other=$otherRecent long=$longPress")
+        Log.d(
+            TAG,
+            "bounce decision=$decision front=$frontIsGoogleHome other=$otherRecent long=$longPress " +
+                "home=$isHome allowed=$allowed paused=${now < pausedUntil}",
+        )
         if (!decision) return
 
         // Circuit breaker: if Google keeps taking the screen back, stop fighting for a while.
