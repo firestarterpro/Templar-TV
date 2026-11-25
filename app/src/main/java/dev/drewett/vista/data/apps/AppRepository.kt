@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import com.firestarterpro.templartv.domain.AppEntry
+import com.firestarterpro.templartv.observation.ProviderLaunchStore
 
 /**
  * Enumerates launchable apps directly from the OS. TV (LEANBACK_LAUNCHER) entries win over
@@ -73,7 +74,9 @@ class AppRepository(private val context: Context) {
             component = entry.componentName
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
         }
-        runCatching { context.startActivity(intent) }
+        val started = runCatching { context.startActivity(intent) }.isSuccess
+        // Provider apps opened from Templar count as supporting evidence for what plays next.
+        if (started) runCatching { ProviderLaunchStore(context).mark(entry.packageName) }
     }
 
     /** Open the system App Info screen for an app. */
