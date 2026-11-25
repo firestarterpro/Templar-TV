@@ -32,6 +32,15 @@ enum class Flag(
     SHELF_EDITING("shelf_editing", true, "Edit shelves", "Add, move, pin, hide and remove shelf tiles."),
     FAVOURITE_SHOWS("favourite_shows", true, "Favourite shows", "Keep an ordered list of favourite shows."),
     ROW_MANAGER("row_manager", true, "Row manager", "Reorder, hide and rename home rows."),
+    BIG_BOX_HOME(
+        "big_box_home", true, "Big-box home",
+        "Use the new home (shelves, favourites, edit and move modes). Off brings back the classic For you screen.",
+    ),
+    HOME_VIEW_COLUMNS("home_view_columns", true, "Home view: Columns (Beta)", "Each shelf as a column of posters, side by side."),
+    HOME_VIEW_RAIL_GRID("home_view_rail_grid", true, "Home view: Rail + grid (Beta)", "Shelf names on the left, the chosen shelf as a poster grid."),
+    HOME_VIEW_SPOTLIGHT("home_view_spotlight", true, "Home view: Spotlight (Beta)", "Full-screen artwork for the focused show with one strip below."),
+    HOME_VIEW_WALL("home_view_wall", true, "Home view: Wall (Beta)", "One big poster grid with filter chips across the top."),
+    HOME_VIEW_LIST("home_view_list", true, "Home view: List (Beta)", "Text-first list of everything, grouped by shelf."),
     KEYBOARD_SHORTCUTS("keyboard_shortcuts", true, "Keyboard shortcuts", "Use your own key shortcuts inside Templar TV."),
     GLOBAL_SHORTCUTS(
         "global_shortcuts", false, "Shortcuts over other apps",
