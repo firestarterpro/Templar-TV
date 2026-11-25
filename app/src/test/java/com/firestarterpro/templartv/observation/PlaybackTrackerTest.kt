@@ -51,6 +51,14 @@ class PlaybackTrackerTest {
         assertEquals(1, r.size)
     }
 
+    @Test fun staleStopPositionIsNotAViewing() {
+        // Real Peacock behaviour: idle session, metadata appears, state STOPPED, old position kept.
+        assertTrue(records(tracker.onSnapshot(p, snap(0, PlayState.STOPPED, 2_597_381))).isEmpty())
+        assertTrue(records(tracker.onSnapshot(p, snap(2_000, PlayState.BUFFERING, 0))).isEmpty())
+        assertTrue(records(tracker.onSnapshot(p, snap(4_000, PlayState.PLAYING, 8_000))).isEmpty())
+        assertEquals(1, records(tracker.onSnapshot(p, snap(50_000, PlayState.PLAYING, 54_000))).size)
+    }
+
     @Test fun heartbeatSavesPositionEveryMinuteOnly() {
         tracker.onSnapshot(p, snap(0, pos = 600_000))             // qualifies, recorded
         assertTrue(records(tracker.onSnapshot(p, snap(30_000, pos = 630_000))).isEmpty())

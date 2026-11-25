@@ -116,7 +116,10 @@ class PlaybackTracker(
         track.last = s
         track.parsed = parsed
 
-        val startsFarIn = s.state != PlayState.BUFFERING && s.positionMs >= config.minResumePositionMs
+        // Resuming far in counts only while actually playing or paused. A stopped session keeps its
+        // old position (Peacock shows the last episode's 43 minutes at idle), which is not a viewing.
+        val startsFarIn = (s.state == PlayState.PLAYING || s.state == PlayState.PAUSED) &&
+            s.positionMs >= config.minResumePositionMs
         val justQualified = !track.qualified && (track.playedMs >= config.minPlayMs || startsFarIn)
         if (justQualified) track.qualified = true
         if (!track.qualified) {
