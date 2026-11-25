@@ -68,6 +68,11 @@ enum class Flag(
         "Tested on Google TV Streamer: Google treats the star button as a global key, so an accessibility service never receives it and this has no effect there. Kept for other devices.",
         experimental = true,
     ),
+    QUICK_MENU(
+        "quick_menu", false, "Quick menu",
+        "One left-side menu over any screen: Resume, your apps, quick settings and Templar shortcuts, with Google Home, Google TV Home and Templar Home always at the bottom. Replaces the quick-settings panel while on. Menu or Settings key inside Templar.",
+        experimental = true,
+    ),
 }
 
 /** What the remote's star button does while [Flag.STAR_KEY_CAPTURE] is on. */

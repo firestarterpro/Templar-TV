@@ -86,10 +86,40 @@ fun QuickSettingsPanel(
 
 @Composable
 private fun PanelContent(themeMode: ThemeMode, onCycleTheme: () -> Unit, onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    val notifications by NotificationRepository.active.collectAsStateWithLifecycle()
     val firstTile = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { firstTile.requestFocus() } }
+
+    Column(
+        modifier = Modifier
+            .width(440.dp)
+            .fillMaxHeight()
+            .background(MaterialTheme.colorScheme.surface, PanelShape)
+            .focusGroup()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 28.dp, vertical = 30.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(dateLine(), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+        Text(timeLine(), style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onSurface)
+        QuickSettingsBody(themeMode, onCycleTheme, onDismiss, Modifier.focusRequester(firstTile))
+    }
+}
+
+/**
+ * Every quick-settings action, emitted into the caller's Column. Used unchanged by the classic
+ * panel above and by the quick menu's "Quick settings" section ([com.firestarterpro.templartv.Flag.QUICK_MENU]).
+ * [showGoogleHome] is false in the quick menu only, because its pinned footer already has Google Home.
+ */
+@Composable
+fun QuickSettingsBody(
+    themeMode: ThemeMode,
+    onCycleTheme: () -> Unit,
+    onDismiss: () -> Unit,
+    firstTileModifier: Modifier = Modifier,
+    showGoogleHome: Boolean = true,
+) {
+    val context = LocalContext.current
+    val notifications by NotificationRepository.active.collectAsStateWithLifecycle()
 
     val audioRepository = remember { com.firestarterpro.templartv.data.system.AudioRepository(context) }
     val systemRepository = remember { com.firestarterpro.templartv.data.system.SystemRepository(context) }
@@ -106,158 +136,144 @@ private fun PanelContent(themeMode: ThemeMode, onCycleTheme: () -> Unit, onDismi
         onDismiss()
     }
 
-    Column(
-        modifier = Modifier
-            .width(440.dp)
-            .fillMaxHeight()
-            .background(MaterialTheme.colorScheme.surface, PanelShape)
-            .focusGroup()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 28.dp, vertical = 30.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    Tile("Theme", themeMode.label, R.drawable.ic_theme, Modifier.fillMaxWidth().then(firstTileModifier), onClick = onCycleTheme)
+    Tile("Wi-Fi", wifiName ?: "Open", R.drawable.ic_wifi, Modifier.fillMaxWidth()) { open(Settings.ACTION_WIFI_SETTINGS) }
+
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        GridTile("Bluetooth", R.drawable.ic_bluetooth) {
+            btDevices = systemRepository.bluetoothDevices()
+            showBt = !showBt
+        }
+        GridTile("Audio output", R.drawable.ic_audio) {
+            outputs = audioRepository.outputs()
+            showAudio = !showAudio
+        }
+    }
+    if (showBt) {
+        SubHeader("Bluetooth devices")
+        if (btDevices.isEmpty()) {
+            Hint("No paired devices. Pair one in Bluetooth settings.")
+        } else {
+            btDevices.forEach { device ->
+                Tile(device.name, if (device.connected) "Connected" else "Saved", R.drawable.ic_bluetooth, Modifier.fillMaxWidth()) {
+                    open(Settings.ACTION_BLUETOOTH_SETTINGS)
+                }
+            }
+        }
+        Tile("Bluetooth settings", "Open", R.drawable.ic_bluetooth, Modifier.fillMaxWidth()) { open(Settings.ACTION_BLUETOOTH_SETTINGS) }
+    }
+    if (showAudio) {
+        SubHeader("Audio output")
+        if (outputs.isEmpty()) {
+            Hint("Only the default output is available. Connect a Bluetooth device to switch.")
+        } else {
+            outputs.forEach { out ->
+                Tile(out.name, if (out.selected) "●" else "○", R.drawable.ic_audio, Modifier.fillMaxWidth()) {
+                    audioRepository.select(out.route)
+                    outputs = audioRepository.outputs()
+                }
+            }
+        }
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        GridTile("Display", R.drawable.ic_display) { open(Settings.ACTION_DISPLAY_SETTINGS) }
+        GridTile("Accessibility", R.drawable.ic_accessibility) { open(Settings.ACTION_ACCESSIBILITY_SETTINGS) }
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        GridTile("Screensaver", R.drawable.ic_screensaver) { open("android.settings.DREAM_SETTINGS") }
+        GridTile("Date & time", R.drawable.ic_clock) { open(Settings.ACTION_DATE_SETTINGS) }
+    }
+    SubHeader("Launcher & rollback")
+    if (showGoogleHome) Tile("Open Google Home", "Open", null, Modifier.fillMaxWidth()) {
+        if (GoogleHomeHandoff.openGoogleHome(context)) {
+            onDismiss()
+        } else {
+            googleHomeUnavailable = true
+        }
+    }
+    if (showGoogleHome && googleHomeUnavailable) {
+        Hint("Google Home is not available on this device.")
+    }
+    Tile(
+        "Return to Google TV Home",
+        if (showLauncherGuide) "Hide guide" else "Guide",
+        null,
+        Modifier.fillMaxWidth(),
     ) {
-        Text(dateLine(), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-        Text(timeLine(), style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onSurface)
-
-        Tile("Theme", themeMode.label, R.drawable.ic_theme, Modifier.fillMaxWidth().focusRequester(firstTile), onClick = onCycleTheme)
-        Tile("Wi-Fi", wifiName ?: "Open", R.drawable.ic_wifi, Modifier.fillMaxWidth()) { open(Settings.ACTION_WIFI_SETTINGS) }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            GridTile("Bluetooth", R.drawable.ic_bluetooth) {
-                btDevices = systemRepository.bluetoothDevices()
-                showBt = !showBt
-            }
-            GridTile("Audio output", R.drawable.ic_audio) {
-                outputs = audioRepository.outputs()
-                showAudio = !showAudio
-            }
-        }
-        if (showBt) {
-            SubHeader("Bluetooth devices")
-            if (btDevices.isEmpty()) {
-                Hint("No paired devices. Pair one in Bluetooth settings.")
-            } else {
-                btDevices.forEach { device ->
-                    Tile(device.name, if (device.connected) "Connected" else "Saved", R.drawable.ic_bluetooth, Modifier.fillMaxWidth()) {
-                        open(Settings.ACTION_BLUETOOTH_SETTINGS)
-                    }
-                }
-            }
-            Tile("Bluetooth settings", "Open", R.drawable.ic_bluetooth, Modifier.fillMaxWidth()) { open(Settings.ACTION_BLUETOOTH_SETTINGS) }
-        }
-        if (showAudio) {
-            SubHeader("Audio output")
-            if (outputs.isEmpty()) {
-                Hint("Only the default output is available. Connect a Bluetooth device to switch.")
-            } else {
-                outputs.forEach { out ->
-                    Tile(out.name, if (out.selected) "●" else "○", R.drawable.ic_audio, Modifier.fillMaxWidth()) {
-                        audioRepository.select(out.route)
-                        outputs = audioRepository.outputs()
-                    }
-                }
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            GridTile("Display", R.drawable.ic_display) { open(Settings.ACTION_DISPLAY_SETTINGS) }
-            GridTile("Accessibility", R.drawable.ic_accessibility) { open(Settings.ACTION_ACCESSIBILITY_SETTINGS) }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            GridTile("Screensaver", R.drawable.ic_screensaver) { open("android.settings.DREAM_SETTINGS") }
-            GridTile("Date & time", R.drawable.ic_clock) { open(Settings.ACTION_DATE_SETTINGS) }
-        }
-        SubHeader("Launcher & rollback")
-        Tile("Open Google Home", "Open", null, Modifier.fillMaxWidth()) {
-            if (GoogleHomeHandoff.openGoogleHome(context)) {
-                onDismiss()
-            } else {
-                googleHomeUnavailable = true
-            }
-        }
-        if (googleHomeUnavailable) {
-            Hint("Google Home is not available on this device.")
-        }
-        Tile(
-            "Return to Google TV Home",
-            if (showLauncherGuide) "Hide guide" else "Guide",
-            null,
-            Modifier.fillMaxWidth(),
+        showLauncherGuide = !showLauncherGuide
+    }
+    if (showLauncherGuide) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant, TileShape)
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            showLauncherGuide = !showLauncherGuide
+            Text(
+                "Switch launchers any time",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                "Templar TV leaves Google TV Home installed. Press HOME and select Google TV Home, or open Settings > Apps > Default apps > Home app and choose Google TV Home. If Home keeps opening Templar TV, switch off Features > Home opens Templar.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+            )
+            Tile("Open Android settings", "Open", R.drawable.ic_settings, Modifier.fillMaxWidth()) {
+                open(Settings.ACTION_SETTINGS)
+            }
         }
-        if (showLauncherGuide) {
+    }
+    Tile("Features", "On / off", R.drawable.ic_settings, Modifier.fillMaxWidth()) {
+        runCatching {
+            context.startActivity(
+                Intent(context, com.firestarterpro.templartv.FeaturesActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+        onDismiss()
+    }
+    Tile("Reload Templar TV", "", R.drawable.ic_reload, Modifier.fillMaxWidth()) {
+        (context as? android.app.Activity)?.recreate()
+        onDismiss()
+    }
+    Tile("All settings", "Open", R.drawable.ic_settings, Modifier.fillMaxWidth()) { open(Settings.ACTION_SETTINGS) }
+
+    Text(
+        "Notifications",
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+        modifier = Modifier.padding(top = 10.dp),
+    )
+    if (notifications.isEmpty()) {
+        Text(
+            "No new notifications",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        )
+    } else {
+        notifications.take(6).forEach { n ->
             Column(
                 Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surfaceVariant, TileShape)
-                    .padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(14.dp),
             ) {
-                Text(
-                    "Switch launchers any time",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    "Templar TV leaves Google TV Home installed. Press HOME and select Google TV Home, or open Settings > Apps > Default apps > Home app and choose Google TV Home. If Home keeps opening Templar TV, switch off Features > Home opens Templar.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                )
-                Tile("Open Android settings", "Open", R.drawable.ic_settings, Modifier.fillMaxWidth()) {
-                    open(Settings.ACTION_SETTINGS)
+                Text(n.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (n.text.isNotBlank()) {
+                    Text(n.text, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
-        Tile("Features", "On / off", R.drawable.ic_settings, Modifier.fillMaxWidth()) {
-            runCatching {
-                context.startActivity(
-                    Intent(context, com.firestarterpro.templartv.FeaturesActivity::class.java)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
-            }
-            onDismiss()
-        }
-        Tile("Reload Templar TV", "", R.drawable.ic_reload, Modifier.fillMaxWidth()) {
-            (context as? android.app.Activity)?.recreate()
-            onDismiss()
-        }
-        Tile("All settings", "Open", R.drawable.ic_settings, Modifier.fillMaxWidth()) { open(Settings.ACTION_SETTINGS) }
-
-        Text(
-            "Notifications",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            modifier = Modifier.padding(top = 10.dp),
-        )
-        if (notifications.isEmpty()) {
-            Text(
-                "No new notifications",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            )
-        } else {
-            notifications.take(6).forEach { n ->
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant, TileShape)
-                        .padding(14.dp),
-                ) {
-                    Text(n.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (n.text.isNotBlank()) {
-                        Text(n.text, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-            }
-        }
-
-        Text(
-            "Templar TV ${appVersion(context)}",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
-            modifier = Modifier.padding(top = 16.dp),
-        )
     }
+
+    Text(
+        "Templar TV ${appVersion(context)}",
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
+        modifier = Modifier.padding(top = 16.dp),
+    )
 }
 
 private fun appVersion(context: android.content.Context): String = runCatching {
@@ -265,12 +281,12 @@ private fun appVersion(context: android.content.Context): String = runCatching {
 }.getOrDefault("")
 
 @Composable
-private fun SubHeader(text: String) {
+internal fun SubHeader(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
 }
 
 @Composable
-private fun Hint(text: String) {
+internal fun Hint(text: String) {
     Text(text, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
 }
 
@@ -280,7 +296,7 @@ private fun RowScope.GridTile(label: String, iconRes: Int, onClick: () -> Unit) 
 }
 
 @Composable
-private fun Tile(label: String, value: String?, iconRes: Int?, modifier: Modifier = Modifier, onClick: () -> Unit) {
+internal fun Tile(label: String, value: String?, iconRes: Int?, modifier: Modifier = Modifier, onClick: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val content = if (focused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     Surface(
@@ -318,5 +334,5 @@ private fun Tile(label: String, value: String?, iconRes: Int?, modifier: Modifie
     }
 }
 
-private fun dateLine(): String = SimpleDateFormat("EEE, MMM dd", Locale.getDefault()).format(Date())
-private fun timeLine(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+internal fun dateLine(): String = SimpleDateFormat("EEE, MMM dd", Locale.getDefault()).format(Date())
+internal fun timeLine(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
