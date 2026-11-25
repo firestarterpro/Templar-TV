@@ -38,6 +38,16 @@ enum class Flag(
         "Let modifier-key and function-key shortcuts work while another app is open. Needs the accessibility service on.",
         experimental = true,
     ),
+    COMPANION_API(
+        "companion_api", false, "Companion API",
+        "Let a paired Templar Tablet on your home network organise favourites, shelves and rows, and open apps. Opens port 8780 on the LAN only.",
+        experimental = true,
+    ),
+    COMPANION_HISTORY(
+        "companion_history", false, "Share watch history with companion",
+        "Let paired companion devices read your watch history (read-only). Needs Companion API on.",
+        experimental = true,
+    ),
     JELLYFIN("jellyfin", false, "Jellyfin", "Show personal media from your Jellyfin server.", experimental = true),
     OCR_OBSERVATION("ocr_observation", false, "Screen reading (OCR)", "Opt-in screen text matching for watch history.", experimental = true),
     FOCUSED_TILE_OBSERVATION("focused_tile_observation", false, "Focused tile observation", "Use the focused tile as watch evidence.", experimental = true),

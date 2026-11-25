@@ -88,4 +88,6 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Real org.json for plain JVM tests of the companion router (android.jar only has stubs).
+    testImplementation(libs.org.json)
 }
