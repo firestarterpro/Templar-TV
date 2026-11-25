@@ -67,7 +67,13 @@
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|density|fontScale|locale|layoutDirection"
-            android:theme="@style/Theme.Vista.Transparent" />
+            android:theme="@style/Theme.Vista.Transparent">
+            <!-- Quick menu (Flag.QUICK_MENU). Not exported: only Templar's own process can send it. -->
+            <intent-filter>
+                <action android:name="com.firestarterpro.templartv.action.OPEN_QUICK_MENU" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <!-- Settings -> Features: runtime feature flags -->
         <activity
