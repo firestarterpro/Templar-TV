@@ -255,7 +255,7 @@ The user can confirm a match, choose another candidate, enter a title manually, 
 ## 17. Input devices, shortcuts, and quick menu (2026-11-25, new)
 
 ### 17.1 Keyboard and touchpad
-- Support USB and Bluetooth HID keyboards and touchpads, including handheld 92-key models with a touchpad. A Bluetooth model is preferred because the Streamer's only USB-C port is mainly for power (to be verified).
+- Support USB and Bluetooth HID keyboards and touchpads, including handheld 92-key models with a touchpad. **(owner, 2026-11-25)** The owner's keyboard may have both Bluetooth and a USB dongle, so both paths are supported. Bluetooth is the default recommendation because the Streamer's only USB-C port is mainly for power; the device probe checks whether it carries data through a hub.
 - Typing goes straight into Templar search. Arrow keys, Enter, and Esc behave like D-pad, Select, and Back. The touchpad pointer can click tiles and scroll rows.
 - **Shortcut editor** (Settings → Shortcuts): record a key or chord, then pick an action: open app, open a shelf, open favourites, voice search, quick menu, Google Home panel, Google TV Home, play/pause, back to Templar, toggle a feature.
 - Inside Templar any key can be bound. Over other apps, only modifier chords or unused keys (for example F1–F12) act; everything else passes through untouched.
@@ -263,7 +263,12 @@ The user can confirm a match, choose another candidate, enter a title manually, 
 ### 17.2 Quick menu
 - A pop-up menu that opens over any app, scrolls with the D-pad, and launches without returning to the home screen. Back closes it and returns to the app.
 - Default sections (each can be hidden or reordered): Continue Watching (top 5), Favourite Shows, pinned apps, Voice search, Google Home panel, Google TV Home, Quick settings.
-- Triggers: the remote's star button (Templar exposes a "Templar Menu" launcher entry that the star button can open), a keyboard shortcut, and optionally a remote key captured by the accessibility service. Long-press Home is never used.
+- Triggers: the remote's star button, a keyboard shortcut, and optionally a remote key captured by the accessibility service. Long-press Home and long-press star are never used.
+- **(owner, 2026-11-25) Star button is chosen and changed in Templar.** Settings → Star button lists what a star press does: Quick menu (default), Voice search, Favourite shows, Continue Watching, a chosen app, or Google Home panel. How it works:
+  - The star button is mapped once in Google's shortcut editor (hold star for 1–2 seconds) to a tiny companion app, "Templar Menu", with its own package. A second entry inside Templar is probably not listed by Google's picker.
+  - Each star press opens the companion, which reads Templar's setting and does that action. Changing the action later happens only in Templar.
+  - "Google Home panel" has no public way for an app to open it, so picking it shows the steps to point the star button back at Google Home in Google's editor. The quick menu keeps a Google Home tile either way.
+  - If sideloaded apps don't appear in Google's picker, the fallback is accessibility capture of the star key (`MACRO_1`), behind its own flag, default off, because of the reported volume-hold problem.
 - v1 opens as a translucent screen. Keeping a video playing underneath with a system overlay is a later, separate flag.
 
 ## 18. Feature flags and user control (2026-11-25, new)
@@ -280,7 +285,9 @@ Every feature is user-toggleable. Flags move from compile-time constants to a ru
 | favouriteShows | on |
 | rowManager | on |
 | voiceSearch | on |
-| tmdbCatalog | off until a key is entered |
+| tmdbCatalog | on once a key is entered (owner approved TMDB, 2026-11-25) |
+| starButtonAction (setting, not a flag) | Quick menu |
+| starKeyCapture | off |
 | unifiedSearch | on |
 | quickMenu | on |
 | quickMenuOverlayMode | off |

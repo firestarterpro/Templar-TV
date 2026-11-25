@@ -38,8 +38,10 @@ Build (short, one PR each, in order; each lands behind its flag):
 
 After B4, B5, and B6: a short design-review pass and a Fable check each.
 
-## Questions for the owner
-See the draft PR description and the project thread. They cover the star-button mapping, the keyboard model, and the TMDB key.
+## Owner answers (2026-11-25, 3:41 AM Central)
+1. **Star button: "let me choose in the app and change it."** Decision: a companion "Templar Menu" app is mapped once in Google's shortcut editor; Templar's Settings → Star button picks what each press does, and changing it never needs Google's editor again. Google Home panel stays one tile away in the quick menu, and choosing it in the setting shows how to map the star back to Google. Why: it's the only design that gives an in-app choice without the accessibility key filter's volume risk. Goes into B5.
+2. **Keyboard: "I'll have to find it, but I think it's both."** Decision: support Bluetooth and USB dongle; B1 checks USB-C data on the Streamer. Recommend pairing over Bluetooth when the keyboard offers both.
+3. **TMDB: yes.** Decision: TMDB is the catalog for adding shows and checking which services carry them. The owner creates a free TMDB account and API key, enters it on the TV only, and saves it in Spawning Pool. Never in git. Goes into B6.
 
 ## Device probe (B1), Windows PowerShell 5.1
 
