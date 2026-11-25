@@ -86,6 +86,14 @@ class PlaybackTrackerTest {
         assertTrue(tracker.activeKeys().contains(key))
     }
 
+    @Test fun metadataClearedAtStopStillSavesTheStopPosition() {
+        // Real Peacock behaviour: metadata is emptied when playback stops, position stays.
+        tracker.onSnapshot(p, snap(0, pos = 600_000))
+        val r = records(tracker.onSnapshot(p, snap(5_000, PlayState.STOPPED, 640_000, md = null)))
+        assertEquals(640_000L, r.single().positionMs)
+        assertEquals("Test Show", r.single().title)
+    }
+
     @Test fun noMetadataEndsTheTrack() {
         tracker.onSnapshot(p, snap(0, pos = 600_000))
         val r = records(tracker.onSnapshot(p, snap(5_000, md = null)))
