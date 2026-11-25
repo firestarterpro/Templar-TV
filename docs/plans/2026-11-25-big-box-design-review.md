@@ -176,6 +176,21 @@ Never use colour alone for these; use shape and a text label in the focused-tile
   7. **Pinned footer, can't be hidden**: Google Home · Google TV Home · Templar Home
 - The footer is always the last items, so "Up from the top" or "Down to the bottom" reaches Google Home in a fixed number of presses. Up from item 1 wraps to the footer (the one place wrapping helps: it makes Google Home 2 presses away).
 
+### 6.1 Star button setting (owner answer, 2026-11-25)
+
+Settings → Remote → Star button, with these choices (default: Google Home panel, so nothing changes until the owner picks):
+- Google Home panel
+- Templar quick menu
+- Templar voice search
+- Favourite Shows
+- A chosen app
+
+How Templar can honour the choice, best first:
+1. **Templar handles the key itself.** If the device probe shows the star button sends its own key code to the accessibility service, Templar maps it to the chosen action and passes it through untouched when "Google Home panel" is chosen. The setting then works fully inside Templar. [V]
+2. **System setting with Templar targets.** If the key never reaches apps, only Google TV's own setting can change it [K]. Templar then exposes launcher entries ("Templar Menu", "Templar Voice", "Templar Favourites") that the system setting can pick, and the in-app setting opens the system page with a one-line guide for the chosen option. [V]
+
+Either way the in-app screen shows what the star button does right now and how to undo it. Long-press Home always still opens the dashboard with Google Home.
+
 ### Behaviour
 - Pressing the trigger again closes it, as does Back. It returns to the app underneath.
 - Opening a translucent activity over a playing video may pause it. Most players pause on `onPause` and some stop playback. Measure with Peacock, Paramount+, Prime Video and Max before calling the menu seamless. [K][V] The later overlay mode (`quickMenuOverlayMode`) is the fix if pausing bothers the owner.
@@ -190,7 +205,7 @@ Never use colour alone for these; use shape and a text label in the focused-tile
 | Path | Where | Presses | Status |
 | --- | --- | --- | --- |
 | Long-press Home | Anywhere | 1 | Must never be consumed by Templar (plan rule). Test on every build. |
-| Star button | Anywhere | 1 | Only if left mapped to the Google Home panel (question 1). |
+| Star button | Anywhere | 1 | When the owner's star-button setting is "Google Home panel" (the default). See 6.1. |
 | Top-bar Google Home icon | Templar home | ~3 | **New in this review**; add to the plan. |
 | Quick menu footer | Anywhere the quick menu opens | ~2 | Pinned, can't be hidden. |
 | Quick settings tile | Templar | ~3 | Plan already has it; becomes part of the quick menu if question 2 is yes. |
@@ -217,10 +232,7 @@ Add to section 20 (validation), per build that touches the home screen:
 
 ## 9. Questions for the owner
 
-1. **Star button: what should it open?** Today it can open the Google Home panel directly. Your call:
-   - a) **Templar quick menu**, with Google Home 2 presses inside it, plus long-press Home still 1 press. Est. benefit ~20% (one button for everything Templar). ⭐ Recommended.
-   - b) **Keep it on the Google Home panel**; open the quick menu with the Menu key or a keyboard shortcut. Est. ~12% (Google Home stays 1 press; quick menu is less handy on the remote alone).
-   - c) Decide after the device probe shows which remote keys are free. Est. ~8% now (delays the quick menu design).
+1. ~~Star button: what should it open?~~ **Answered 2026-11-25: the owner chooses in the app and can change it any time.** See section 6.1. No longer a question.
 2. **Fold today's quick-settings panel into the new quick menu, so there is one menu instead of two?** Yes / No. Yes est. ~10% (one thing to learn, one trigger). No keeps quick settings on its own key.
 3. **Provider rows on home: rank these**, 1 = most wanted.
    - a) One "recently played" shelf per provider, provider rows behind "More from …" (~25%, shortest paths) ⭐ Recommended
