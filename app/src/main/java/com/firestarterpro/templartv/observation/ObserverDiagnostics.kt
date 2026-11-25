@@ -28,6 +28,14 @@ object ObserverDiagnostics {
         Log.d(TAG, "$packageOrKey $code")
     }
 
+    /**
+     * Debug only ([com.firestarterpro.templartv.Flag.DEBUG_METADATA_VALUES], off by default). Goes to
+     * logcat only, never into the in-memory list above, and contains real titles while it is on.
+     */
+    fun debugValue(packageName: String, key: String, value: String) {
+        Log.d(TAG, "$packageName $key=$value")
+    }
+
     @Synchronized
     fun recent(): List<String> = lines.toList()
 }
