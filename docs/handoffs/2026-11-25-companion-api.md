@@ -45,3 +45,16 @@ Rollback commands (replace the address with the Streamer's adb address):
 - Go back to the previous APK instead (a v2 database cannot be opened by v1, so its data is cleared first):
   `adb -s <streamer> shell pm clear com.firestarterpro.templartv` then
   `adb -s <streamer> install -r -d templartv-0.1.0-before-companion.apk`
+
+Install and overlay were not run by the agent (the PC's permission check blocks device changes relayed through
+the project assistant); the owner runs them. Owner approved granting the overlay permission so companion
+launch and quick-menu calls are not blocked by Android's background-start rules.
+
+Install (Windows PowerShell 5.1):
+`& { adb -s <streamer> install -r "<path>\app-release.apk" 2>&1 | Set-Clipboard }`
+
+Grant overlay:
+`& { adb -s <streamer> shell appops set com.firestarterpro.templartv SYSTEM_ALERT_WINDOW allow; adb -s <streamer> shell appops get com.firestarterpro.templartv SYSTEM_ALERT_WINDOW } 2>&1 | Set-Clipboard`
+
+Revoke overlay (back to the state before install):
+`& { adb -s <streamer> shell appops set com.firestarterpro.templartv SYSTEM_ALERT_WINDOW default } 2>&1 | Set-Clipboard`
