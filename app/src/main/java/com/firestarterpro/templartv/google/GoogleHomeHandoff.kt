@@ -30,15 +30,20 @@ import android.content.Intent
  */
 object GoogleHomeHandoff {
 
-    /** Open Google Home app if installed */
-    fun openGoogleHome(context: Context) {
-        // Discover the Google Home activity safely at runtime
-        val intent = Intent("com.google.android.gms.actions.NOTE_PAIRED_DEVICE_ACTION")
-            .setPackage("com.google.android.apps.home")
-        if (intent.resolveActivity(context.packageManager) != null) {
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    /** Open Google Home when installed and report whether the handoff succeeded. */
+    fun openGoogleHome(context: Context): Boolean {
+        val packageName = "com.google.android.apps.chromecast.app"
+        val intent = runCatching {
+            context.packageManager.getLaunchIntentForPackage(packageName)
+        }.getOrNull() ?: Intent("com.google.android.gms.actions.NOTE_PAIRED_DEVICE_ACTION")
+            .setPackage(packageName)
+            .takeIf { it.resolveActivity(context.packageManager) != null }
+            ?: return false
+        return runCatching {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
-        }
+            true
+        }.getOrDefault(false)
     }
 
     /** Open Android system settings */
@@ -50,8 +55,8 @@ object GoogleHomeHandoff {
 
     /** Show rollback instructions for HOME role */
     fun showRollbackInstructions() {
-        // Documentation: HOME role can be reassigned via:
-        // adb shell pm set-home LAUNCHER_PACKAGE_NAME
-        // To restore Google: adb shell pm set-home com.google.android.tvlauncher
+        // HOME can be reassigned from the Home chooser or Settings -> Apps -> Default apps -> Home app.
+        // `pm set-home` and the com.google.android.tvlauncher package name are unverified on Google TV.
+        // See docs/handoffs/2026-11-22-templar-tv-v0-foundationrollback.md
     }
 }
