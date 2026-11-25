@@ -1,13 +1,19 @@
 package com.firestarterpro.templartv.data.watchhistory
 
-import android.os.Parcelable
-import android.os.Parcel
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.Ignore
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "watch_history")
+/**
+ * One watching session for one title. Columns up to [updatedTimestamp] are the v1 schema and must
+ * not change type or name (existing databases were created with them). v2 columns come after.
+ * Evidence rows and candidate matches for the session live in their own tables.
+ */
+@Entity(
+    tableName = "watch_history",
+    indices = [Index(value = ["profile_id", "stop_timestamp"], name = "index_watch_history_profile_id_stop_timestamp")],
+)
 data class WatchHistoryEntry(
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0,
@@ -150,99 +156,20 @@ data class WatchHistoryEntry(
 
     /** Updated timestamp */
     @ColumnInfo(name = "updated_timestamp")
-    var updatedTimestamp: Long = 0
-) : Parcelable {
-    override fun describeContents(): Int = 0
-    
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeInt(id)
-        parcel.writeString(profileId)
-        parcel.writeString(provider)
-        parcel.writeString(providerAlias)
-        parcel.writeString(packageName)
-        parcel.writeString(contentType)
-        parcel.writeString(canonicalTitle)
-        parcel.writeString(originalTitle)
-        parcel.writeString(seriesTitle)
-        parcel.writeInt(seasonNumber)
-        parcel.writeInt(episodeNumber)
-        parcel.writeString(episodeTitle)
-        parcel.writeString(providerContentId)
-        parcel.writeLong(tmdbId)
-        parcel.writeString(imdbId)
-        parcel.writeString(tvdbId)
-        parcel.writeLong(jellyfinItemId)
-        parcel.writeLong(startTimestamp)
-        parcel.writeLong(stopTimestamp)
-        parcel.writeLong(durationWatched)
-        parcel.writeLong(playbackPosition)
-        parcel.writeLong(mediaRuntime)
-        parcel.writeInt(completionPercentage)
-        parcel.writeString(playbackState)
-        parcel.writeInt(if (watchedStatus) 1 else 0)
-        parcel.writeInt(rewatchCount)
-        parcel.writeString(candidateMatches)
-        parcel.writeFloat(matchConfidence)
-        parcel.writeString(evidenceSource)
-        parcel.writeString(evidenceDetails)
-        parcel.writeInt(if (manualCorrection) 1 else 0)
-        parcel.writeString(artworkReference)
-        parcel.writeString(metadataSource)
-        parcel.writeString(syncState)
-        parcel.writeLong(createdTimestamp)
-        parcel.writeLong(updatedTimestamp)
-    }
+    var updatedTimestamp: Long = 0,
 
-    companion object {
-        @JvmStatic
-        fun createFromParcel(parcel: Parcel): WatchHistoryEntry {
-            return WatchHistoryEntry(
-                id = parcel.readInt(),
-                profileId = parcel.readString() ?: "",
-                provider = parcel.readString() ?: "",
-                providerAlias = parcel.readString() ?: "",
-                packageName = parcel.readString() ?: "",
-                contentType = parcel.readString() ?: "",
-                canonicalTitle = parcel.readString() ?: "",
-                originalTitle = parcel.readString() ?: "",
-                seriesTitle = parcel.readString() ?: "",
-                seasonNumber = parcel.readInt(),
-                episodeNumber = parcel.readInt(),
-                episodeTitle = parcel.readString() ?: "",
-                providerContentId = parcel.readString() ?: "",
-                tmdbId = parcel.readLong(),
-                imdbId = parcel.readString() ?: "",
-                tvdbId = parcel.readString() ?: "",
-                jellyfinItemId = parcel.readLong(),
-                startTimestamp = parcel.readLong(),
-                stopTimestamp = parcel.readLong(),
-                durationWatched = parcel.readLong(),
-                playbackPosition = parcel.readLong(),
-                mediaRuntime = parcel.readLong(),
-                completionPercentage = parcel.readInt(),
-                playbackState = parcel.readString() ?: "",
-                watchedStatus = parcel.readInt() == 1,
-                rewatchCount = parcel.readInt(),
-                candidateMatches = parcel.readString() ?: "",
-                matchConfidence = parcel.readFloat(),
-                evidenceSource = parcel.readString() ?: "",
-                evidenceDetails = parcel.readString() ?: "",
-                manualCorrection = parcel.readInt() == 1,
-                artworkReference = parcel.readString() ?: "",
-                metadataSource = parcel.readString() ?: "",
-                syncState = parcel.readString() ?: "",
-                createdTimestamp = parcel.readLong(),
-                updatedTimestamp = parcel.readLong()
-            )
-        }
+    /**
+     * v2: where the title match stands. Only [ReviewState.CONFIRMED] counts as verified history;
+     * everything else waits in the review queue.
+     */
+    @ColumnInfo(name = "review_state")
+    var reviewState: ReviewState = ReviewState.NEEDS_REVIEW,
 
-        @JvmField
-        val CREATOR: android.os.Parcelable.Creator<WatchHistoryEntry> =
-            object : android.os.Parcelable.Creator<WatchHistoryEntry> {
-                override fun createFromParcel(parcel: android.os.Parcel): WatchHistoryEntry =
-                    WatchHistoryEntry.createFromParcel(parcel)
+    /** v2: Jellyfin item id. Jellyfin ids are GUID strings; the old Long column [jellyfinItemId] is unused. */
+    @ColumnInfo(name = "jellyfin_item_ref")
+    var jellyfinItemRef: String = "",
 
-                override fun newArray(size: Int): Array<WatchHistoryEntry?> = arrayOfNulls(size)
-            }
-    }
-}
+    /** v2: set when the user removes the entry. Removed rows are kept and can be restored. */
+    @ColumnInfo(name = "removed_at")
+    var removedAt: Long? = null,
+)
