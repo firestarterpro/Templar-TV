@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.home
+package com.firestarterpro.templartv.ui.home
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -53,8 +53,8 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
-import dev.drewett.vista.R
-import dev.drewett.vista.data.system.AccountRepository
+import com.firestarterpro.templartv.R
+import com.firestarterpro.templartv.data.system.AccountRepository
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date

@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.content
+package com.firestarterpro.templartv.ui.content
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,9 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import dev.drewett.vista.domain.ContentCard
-import dev.drewett.vista.domain.dominantAspectRatio
-import dev.drewett.vista.ui.components.ContentCardView
+import com.firestarterpro.templartv.domain.ContentCard
+import com.firestarterpro.templartv.domain.dominantAspectRatio
+import com.firestarterpro.templartv.ui.components.ContentCardView
 
 /** A titled grid of content tiles — reused by Movies, Shows and Search results. */
 @Composable

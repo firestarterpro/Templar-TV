@@ -19,17 +19,17 @@ interface WatchHistoryDao {
     fun getAll(): LiveData<List<WatchHistoryEntry>>
 
     @Query("SELECT * FROM watch_history WHERE provider = :provider ORDER BY created_timestamp DESC")
-    suspend fun getByProvider(provider: String): LiveData<List<WatchHistoryEntry>>
+    fun getByProvider(provider: String): LiveData<List<WatchHistoryEntry>>
 
     @Query("SELECT * FROM watch_history WHERE profile_id = :profileId ORDER BY created_timestamp DESC")
-    suspend fun getByProfile(provider: String): LiveData<List<WatchHistoryEntry>>
+    fun getByProfile(profileId: String): LiveData<List<WatchHistoryEntry>>
 
     @Query("DELETE FROM watch_history")
     suspend fun clearAll()
 
     @Query("SELECT * FROM watch_history WHERE watched_status = 1 ORDER BY stop_timestamp DESC LIMIT 10")
-    suspend fun getWatchedRecent(): LiveData<List<WatchHistoryEntry>>
+    fun getWatchedRecent(): LiveData<List<WatchHistoryEntry>>
 
     @Query("SELECT * FROM watch_history WHERE evidence_source = :source ORDER BY created_timestamp DESC")
-    suspend fun getByEvidenceSource(source: String): LiveData<List<WatchHistoryEntry>>
+    fun getByEvidenceSource(source: String): LiveData<List<WatchHistoryEntry>>
 }

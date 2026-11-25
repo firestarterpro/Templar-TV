@@ -1,4 +1,4 @@
-package dev.drewett.vista.data.system
+package com.firestarterpro.templartv.data.system
 
 import android.bluetooth.BluetoothManager
 import android.content.Context

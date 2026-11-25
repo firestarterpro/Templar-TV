@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.home
+package com.firestarterpro.templartv.ui.home
 
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
@@ -67,16 +67,16 @@ import androidx.palette.graphics.Palette
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
-import dev.drewett.vista.domain.AppEntry
-import dev.drewett.vista.domain.AppSection
-import dev.drewett.vista.domain.ContentCard
-import dev.drewett.vista.domain.ContentSection
-import dev.drewett.vista.domain.HomeSection
-import dev.drewett.vista.domain.Spotlight
-import dev.drewett.vista.domain.dominantAspectRatio
-import dev.drewett.vista.ui.components.CircleAppCard
-import dev.drewett.vista.ui.components.ContentCardView
-import dev.drewett.vista.ui.components.DrawableImage
+import com.firestarterpro.templartv.domain.AppEntry
+import com.firestarterpro.templartv.domain.AppSection
+import com.firestarterpro.templartv.domain.ContentCard
+import com.firestarterpro.templartv.domain.ContentSection
+import com.firestarterpro.templartv.domain.HomeSection
+import com.firestarterpro.templartv.domain.Spotlight
+import com.firestarterpro.templartv.domain.dominantAspectRatio
+import com.firestarterpro.templartv.ui.components.CircleAppCard
+import com.firestarterpro.templartv.ui.components.ContentCardView
+import com.firestarterpro.templartv.ui.components.DrawableImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

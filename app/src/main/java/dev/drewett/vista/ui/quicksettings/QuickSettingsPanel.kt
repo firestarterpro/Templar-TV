@@ -90,13 +90,13 @@ private fun PanelContent(themeMode: ThemeMode, onCycleTheme: () -> Unit, onDismi
     val firstTile = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { firstTile.requestFocus() } }
 
-    val audioRepository = remember { dev.drewett.vista.data.system.AudioRepository(context) }
-    val systemRepository = remember { dev.drewett.vista.data.system.SystemRepository(context) }
+    val audioRepository = remember { com.firestarterpro.templartv.data.system.AudioRepository(context) }
+    val systemRepository = remember { com.firestarterpro.templartv.data.system.SystemRepository(context) }
     val wifiName = remember { systemRepository.wifiSsid() }
     var showAudio by remember { mutableStateOf(false) }
-    var outputs by remember { mutableStateOf<List<dev.drewett.vista.data.system.AudioOutput>>(emptyList()) }
+    var outputs by remember { mutableStateOf<List<com.firestarterpro.templartv.data.system.AudioOutput>>(emptyList()) }
     var showBt by remember { mutableStateOf(false) }
-    var btDevices by remember { mutableStateOf<List<dev.drewett.vista.data.system.BtDevice>>(emptyList()) }
+    var btDevices by remember { mutableStateOf<List<com.firestarterpro.templartv.data.system.BtDevice>>(emptyList()) }
 
     fun open(action: String) {
         runCatching { context.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }

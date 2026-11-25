@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.components
+package com.firestarterpro.templartv.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -28,7 +28,7 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
-import dev.drewett.vista.domain.AppEntry
+import com.firestarterpro.templartv.domain.AppEntry
 
 private val MenuShape = RoundedCornerShape(20.dp)
 private val ItemShape = RoundedCornerShape(12.dp)

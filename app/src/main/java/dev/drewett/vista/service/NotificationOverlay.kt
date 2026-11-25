@@ -1,4 +1,4 @@
-package dev.drewett.vista.service
+package com.firestarterpro.templartv.service
 
 import android.content.Context
 import android.graphics.Color
@@ -13,7 +13,7 @@ import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import dev.drewett.vista.domain.NotificationItem
+import com.firestarterpro.templartv.domain.NotificationItem
 
 /**
  * Draws a transient notification card over whatever app is on screen, using a system overlay

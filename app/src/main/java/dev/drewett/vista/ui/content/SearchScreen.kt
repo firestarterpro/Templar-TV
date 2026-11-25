@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.content
+package com.firestarterpro.templartv.ui.content
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -38,11 +38,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import dev.drewett.vista.R
-import dev.drewett.vista.domain.AppEntry
-import dev.drewett.vista.domain.ContentCard
-import dev.drewett.vista.ui.components.AppCard
-import dev.drewett.vista.ui.components.ContentCardView
+import com.firestarterpro.templartv.R
+import com.firestarterpro.templartv.domain.AppEntry
+import com.firestarterpro.templartv.domain.ContentCard
+import com.firestarterpro.templartv.ui.components.AppCard
+import com.firestarterpro.templartv.ui.components.ContentCardView
 
 @Composable
 fun SearchScreen(

@@ -1,11 +1,11 @@
 package com.firestarterpro.templartv.data.watchhistory
 
 import android.os.Parcelable
+import android.os.Parcel
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
-import kotlin.time.DurationKt.minute
 
 @Entity(tableName = "watch_history")
 data class WatchHistoryEntry(
@@ -151,4 +151,98 @@ data class WatchHistoryEntry(
     /** Updated timestamp */
     @ColumnInfo(name = "updated_timestamp")
     var updatedTimestamp: Long = 0
-) : Parcelable
+) : Parcelable {
+    override fun describeContents(): Int = 0
+    
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeInt(id)
+        parcel.writeString(profileId)
+        parcel.writeString(provider)
+        parcel.writeString(providerAlias)
+        parcel.writeString(packageName)
+        parcel.writeString(contentType)
+        parcel.writeString(canonicalTitle)
+        parcel.writeString(originalTitle)
+        parcel.writeString(seriesTitle)
+        parcel.writeInt(seasonNumber)
+        parcel.writeInt(episodeNumber)
+        parcel.writeString(episodeTitle)
+        parcel.writeString(providerContentId)
+        parcel.writeLong(tmdbId)
+        parcel.writeString(imdbId)
+        parcel.writeString(tvdbId)
+        parcel.writeLong(jellyfinItemId)
+        parcel.writeLong(startTimestamp)
+        parcel.writeLong(stopTimestamp)
+        parcel.writeLong(durationWatched)
+        parcel.writeLong(playbackPosition)
+        parcel.writeLong(mediaRuntime)
+        parcel.writeInt(completionPercentage)
+        parcel.writeString(playbackState)
+        parcel.writeInt(if (watchedStatus) 1 else 0)
+        parcel.writeInt(rewatchCount)
+        parcel.writeString(candidateMatches)
+        parcel.writeFloat(matchConfidence)
+        parcel.writeString(evidenceSource)
+        parcel.writeString(evidenceDetails)
+        parcel.writeInt(if (manualCorrection) 1 else 0)
+        parcel.writeString(artworkReference)
+        parcel.writeString(metadataSource)
+        parcel.writeString(syncState)
+        parcel.writeLong(createdTimestamp)
+        parcel.writeLong(updatedTimestamp)
+    }
+
+    companion object {
+        @JvmStatic
+        fun createFromParcel(parcel: Parcel): WatchHistoryEntry {
+            return WatchHistoryEntry(
+                id = parcel.readInt(),
+                profileId = parcel.readString() ?: "",
+                provider = parcel.readString() ?: "",
+                providerAlias = parcel.readString() ?: "",
+                packageName = parcel.readString() ?: "",
+                contentType = parcel.readString() ?: "",
+                canonicalTitle = parcel.readString() ?: "",
+                originalTitle = parcel.readString() ?: "",
+                seriesTitle = parcel.readString() ?: "",
+                seasonNumber = parcel.readInt(),
+                episodeNumber = parcel.readInt(),
+                episodeTitle = parcel.readString() ?: "",
+                providerContentId = parcel.readString() ?: "",
+                tmdbId = parcel.readLong(),
+                imdbId = parcel.readString() ?: "",
+                tvdbId = parcel.readString() ?: "",
+                jellyfinItemId = parcel.readLong(),
+                startTimestamp = parcel.readLong(),
+                stopTimestamp = parcel.readLong(),
+                durationWatched = parcel.readLong(),
+                playbackPosition = parcel.readLong(),
+                mediaRuntime = parcel.readLong(),
+                completionPercentage = parcel.readInt(),
+                playbackState = parcel.readString() ?: "",
+                watchedStatus = parcel.readInt() == 1,
+                rewatchCount = parcel.readInt(),
+                candidateMatches = parcel.readString() ?: "",
+                matchConfidence = parcel.readFloat(),
+                evidenceSource = parcel.readString() ?: "",
+                evidenceDetails = parcel.readString() ?: "",
+                manualCorrection = parcel.readInt() == 1,
+                artworkReference = parcel.readString() ?: "",
+                metadataSource = parcel.readString() ?: "",
+                syncState = parcel.readString() ?: "",
+                createdTimestamp = parcel.readLong(),
+                updatedTimestamp = parcel.readLong()
+            )
+        }
+
+        @JvmField
+        val CREATOR: android.os.Parcelable.Creator<WatchHistoryEntry> =
+            object : android.os.Parcelable.Creator<WatchHistoryEntry> {
+                override fun createFromParcel(parcel: android.os.Parcel): WatchHistoryEntry =
+                    WatchHistoryEntry.createFromParcel(parcel)
+
+                override fun newArray(size: Int): Array<WatchHistoryEntry?> = arrayOfNulls(size)
+            }
+    }
+}

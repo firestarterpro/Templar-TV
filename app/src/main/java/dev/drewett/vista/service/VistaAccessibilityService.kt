@@ -1,10 +1,10 @@
-package dev.drewett.vista.service
+package com.firestarterpro.templartv.service
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
-import dev.drewett.vista.QuickSettingsActivity
+import com.firestarterpro.templartv.QuickSettingsActivity
 
 /**
  * Captures the remote's Settings/dashboard key globally so the Vista quick-settings panel opens

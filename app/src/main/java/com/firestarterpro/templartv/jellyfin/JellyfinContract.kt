@@ -33,6 +33,7 @@ interface JellyfinContract {
         val type: String,
         val tags: List<String>,
         val callbacks: Callbacks?
+    )
 
     interface Callbacks {
         fun onLibrariesUpdated()
@@ -69,3 +70,4 @@ interface JellyfinContract {
         val serverUrl: String?,
         val errorMessage: String?
     )
+}

@@ -1,4 +1,4 @@
-package dev.drewett.vista.domain
+package com.firestarterpro.templartv.domain
 
 import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Immutable

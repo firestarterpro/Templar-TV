@@ -1,4 +1,4 @@
-package dev.drewett.vista.data.system
+package com.firestarterpro.templartv.data.system
 
 import android.content.Context
 import android.media.MediaRouter

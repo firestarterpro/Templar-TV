@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui
+package com.firestarterpro.templartv.ui
 
 import kotlinx.coroutines.flow.MutableStateFlow
 

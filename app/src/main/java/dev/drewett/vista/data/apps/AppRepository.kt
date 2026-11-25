@@ -1,4 +1,4 @@
-package dev.drewett.vista.data.apps
+package com.firestarterpro.templartv.data.apps
 
 import android.content.ComponentName
 import android.content.Context
@@ -6,7 +6,7 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
-import dev.drewett.vista.domain.AppEntry
+import com.firestarterpro.templartv.domain.AppEntry
 
 /**
  * Enumerates launchable apps directly from the OS. TV (LEANBACK_LAUNCHER) entries win over

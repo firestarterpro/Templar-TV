@@ -1,4 +1,4 @@
-package dev.drewett.vista.ui.components
+package com.firestarterpro.templartv.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +23,7 @@ import androidx.tv.material3.Glow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
-import dev.drewett.vista.domain.AppEntry
+import com.firestarterpro.templartv.domain.AppEntry
 
 private val CardShape = RoundedCornerShape(14.dp)
 
