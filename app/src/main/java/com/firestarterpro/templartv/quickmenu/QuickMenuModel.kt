@@ -1,5 +1,7 @@
 package com.firestarterpro.templartv.quickmenu
 
+import com.firestarterpro.templartv.Flag
+
 /**
  * Pure model for the Templar quick menu ([com.firestarterpro.templartv.Flag.QUICK_MENU]).
  * No Android types, so ordering, hiding and the pinned footer are unit tested on the JVM.
@@ -8,12 +10,22 @@ package com.firestarterpro.templartv.quickmenu
  * pinned [FooterItem]s. The footer is not part of [QuickMenuLayout] at all, so it can't be hidden,
  * moved or dropped by a stored value.
  */
-enum class QuickMenuSection(val id: String, val label: String) {
+enum class QuickMenuSection(val id: String, val label: String, val flags: List<Flag> = emptyList()) {
     RESUME("resume", "Resume"),
+    /** Recently played shelf tiles (B3), opened through ShelfLauncher. */
+    CONTINUE_WATCHING("continue_watching", "Continue watching", listOf(Flag.PROVIDER_RECENT_SHELVES)),
+    FAVOURITE_SHOWS("favourite_shows", "Favourite shows", listOf(Flag.FAVOURITE_SHOWS)),
     APPS("apps", "Apps"),
+    /** Home view picker and previous / next view (B4 HomeActions). */
+    CHANGE_VIEW("change_view", "Change view", listOf(Flag.BIG_BOX_HOME)),
+    /** Row Manager (B4 HomeActions.openRowManager). */
+    ROW_MANAGER("row_manager", "Rows", listOf(Flag.BIG_BOX_HOME, Flag.ROW_MANAGER)),
     QUICK_SETTINGS("quick_settings", "Quick settings"),
     TEMPLAR_SHORTCUTS("templar_shortcuts", "Templar"),
     ;
+
+    /** Shown only while every flag it depends on is on. */
+    fun isAvailable(isOn: (Flag) -> Boolean): Boolean = flags.all(isOn)
 
     companion object {
         fun fromId(id: String): QuickMenuSection? = entries.firstOrNull { it.id == id }
@@ -41,6 +53,9 @@ data class QuickMenuLayout(val sections: List<SectionState>) {
     }
 
     val visibleSections: List<QuickMenuSection> get() = sections.filterNot { it.hidden }.map { it.section }
+
+    /** Visible sections whose feature flags are on. Hidden-by-flag sections keep their place. */
+    fun visibleSections(isOn: (Flag) -> Boolean): List<QuickMenuSection> = visibleSections.filter { it.isAvailable(isOn) }
 
     fun isHidden(section: QuickMenuSection): Boolean = sections.first { it.section == section }.hidden
 

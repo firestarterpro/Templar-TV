@@ -55,10 +55,6 @@ object SettingKeys {
     const val HOME_VIEW = "home_view"
     /** How many columns the Columns view shows at once (3 to 6). */
     const val COLUMNS_COUNT = "columns_count"
-    /** quick_menu | voice_search | favourite_shows | continue_watching | app:<package> | google_home_panel */
-    const val STAR_ACTION = "star_action"
-    /** google_speech_popup | templar_recognizer */
-    const val VOICE_FALLBACK = "voice_fallback"
     const val AUTO_ADD_FROM_PLAYBACK = "auto_add_from_playback"
     const val MIN_WATCH_SECONDS = "min_watch_seconds"
     const val SHELF_LENGTH = "shelf_length"
@@ -66,8 +62,6 @@ object SettingKeys {
     val defaults: Map<String, String> = mapOf(
         HOME_VIEW to "columns",
         COLUMNS_COUNT to "4",
-        STAR_ACTION to "quick_menu",
-        VOICE_FALLBACK to "google_speech_popup",
         AUTO_ADD_FROM_PLAYBACK to "true",
         MIN_WATCH_SECONDS to "120",
         SHELF_LENGTH to "20",

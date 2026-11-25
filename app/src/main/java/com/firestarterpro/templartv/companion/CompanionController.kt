@@ -8,7 +8,7 @@ import android.provider.Settings
 import android.util.Log
 import com.firestarterpro.templartv.FeatureFlags
 import com.firestarterpro.templartv.Flag
-import com.firestarterpro.templartv.QuickSettingsActivity
+import com.firestarterpro.templartv.quickmenu.QuickMenuController
 import com.firestarterpro.templartv.data.TemplarData
 import com.firestarterpro.templartv.data.favourites.FavouritesRepository
 import kotlinx.coroutines.flow.first
@@ -93,10 +93,9 @@ private class AndroidCompanionHost(private val context: Context) : CompanionHost
         return mayBeBlocked()
     }
 
+    /** The quick menu when its flag is on, otherwise the old quick-settings panel. */
     override fun openQuickMenu(): Boolean {
-        runCatching {
-            context.startActivity(Intent(context, QuickSettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        }
+        QuickMenuController.openOrLegacy(context)
         return mayBeBlocked()
     }
 

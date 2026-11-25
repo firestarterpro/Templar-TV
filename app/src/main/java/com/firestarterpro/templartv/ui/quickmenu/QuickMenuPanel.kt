@@ -58,7 +58,15 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import com.firestarterpro.templartv.FeatureFlags
 import com.firestarterpro.templartv.FeaturesActivity
+import com.firestarterpro.templartv.Flag
+import com.firestarterpro.templartv.data.TemplarData
+import com.firestarterpro.templartv.data.favourites.FavouriteShow
+import com.firestarterpro.templartv.data.shelf.ShelfEntry
+import com.firestarterpro.templartv.home.HomeActions
+import com.firestarterpro.templartv.home.ProviderCatalog
+import com.firestarterpro.templartv.observation.ShelfLauncher
 import com.firestarterpro.templartv.R
 import com.firestarterpro.templartv.data.apps.AppRepository
 import com.firestarterpro.templartv.data.favourites.FavouritesRepository
@@ -79,12 +87,16 @@ import com.firestarterpro.templartv.ui.quicksettings.Tile
 import com.firestarterpro.templartv.ui.quicksettings.dateLine
 import com.firestarterpro.templartv.ui.quicksettings.timeLine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private val PanelShape = RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp)
 private val TileShape = RoundedCornerShape(16.dp)
 private const val MAX_APPS = 8
+private const val MAX_SHOWS = 5
 
 /**
  * The Templar quick menu ([com.firestarterpro.templartv.Flag.QUICK_MENU]). Slides in from the
@@ -116,7 +128,7 @@ fun QuickMenuPanel(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalCoroutinesApi::class)
 @Composable
 private fun MenuContent(
     themeMode: ThemeMode,
@@ -141,6 +153,27 @@ private fun MenuContent(
         value = withContext(Dispatchers.IO) { runCatching { appRepository.loadApps() }.getOrDefault(emptyList()) }
     }
     val byPackage = remember(apps) { apps.associateBy { it.packageName } }
+
+    val flagsFlow = remember { FeatureFlags.observe(context) }
+    val flags by flagsFlow.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val templarData = remember { runCatching { TemplarData.get(context) }.getOrNull() }
+    val continueFlow = remember {
+        templarData?.let { d -> d.profiles.activeProfileId.flatMapLatest { d.shelves.observeContinue(it, MAX_SHOWS) }.catch { emit(emptyList()) } }
+    }
+    val continueList by (continueFlow ?: kotlinx.coroutines.flow.flowOf(emptyList()))
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val showsFlow = remember {
+        templarData?.let { d -> d.profiles.activeProfileId.flatMapLatest { d.favourites.observe(it) }.catch { emit(emptyList()) } }
+    }
+    val shows by (showsFlow ?: kotlinx.coroutines.flow.flowOf(emptyList()))
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val shelfLauncher = remember(templarData) { templarData?.let { ShelfLauncher(context, it.shelves) } }
+
+    /** Asks the big-box home for something, then shows Templar's home (it picks the request up). */
+    fun homeAction(action: () -> Unit) {
+        action()
+        onTemplarHome()
+    }
 
     val top = remember { FocusRequester() }
     val googleHome = remember { FocusRequester() }
@@ -205,9 +238,30 @@ private fun MenuContent(
                     onDone = { editing = false },
                 )
             } else {
-                layout.visibleSections.forEach { section ->
+                layout.visibleSections { flag -> flags[flag] ?: flag.defaultEnabled }.forEach { section ->
                     when (section) {
                         QuickMenuSection.RESUME -> ResumeSection(recent, byPackage, context.packageName, ::launch)
+                        QuickMenuSection.CONTINUE_WATCHING -> ContinueSection(continueList) { entry ->
+                            scope.launch {
+                                val ok = shelfLauncher?.let { runCatching { it.launch(entry) }.getOrDefault(false) } ?: false
+                                if (ok) onDismiss()
+                            }
+                        }
+                        QuickMenuSection.FAVOURITE_SHOWS -> FavouriteShowsSection(shows) { show ->
+                            if (openProvider(context, show.preferredProvider)) onDismiss() else onTemplarHome()
+                        }
+                        QuickMenuSection.CHANGE_VIEW -> {
+                            SubHeader(section.label)
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Tile("◀ Previous", null, null, Modifier.weight(1f)) { homeAction { HomeActions.cycleView(-1) } }
+                                Tile("Next ▶", null, null, Modifier.weight(1f)) { homeAction { HomeActions.cycleView(1) } }
+                            }
+                            Tile("Pick a view", "Rows, Columns, ...", null, Modifier.fillMaxWidth()) { homeAction { HomeActions.openViewPicker() } }
+                        }
+                        QuickMenuSection.ROW_MANAGER -> {
+                            SubHeader(section.label)
+                            Tile("Row manager", "Order, hide, rename", null, Modifier.fillMaxWidth()) { homeAction { HomeActions.openRowManager() } }
+                        }
                         QuickMenuSection.APPS -> AppsSection(favourites, byPackage, ::launch)
                         QuickMenuSection.QUICK_SETTINGS -> {
                             SubHeader(section.label)
@@ -238,6 +292,42 @@ private fun ResumeSection(
     } else {
         AppTile(last, "Resume ${last.label}", Modifier.fillMaxWidth().height(84.dp)) { onLaunch(last) }
     }
+}
+
+@Composable
+private fun ContinueSection(entries: List<ShelfEntry>, onOpen: (ShelfEntry) -> Unit) {
+    SubHeader(QuickMenuSection.CONTINUE_WATCHING.label)
+    if (entries.isEmpty()) {
+        Hint("Shows you play in your streaming apps show up here.")
+        return
+    }
+    entries.take(MAX_SHOWS).forEach { entry ->
+        val title = entry.seriesTitle.ifBlank { entry.title }
+        Tile(title, ProviderCatalog.label(entry.provider), null, Modifier.fillMaxWidth()) { onOpen(entry) }
+    }
+}
+
+@Composable
+private fun FavouriteShowsSection(shows: List<FavouriteShow>, onOpen: (FavouriteShow) -> Unit) {
+    SubHeader(QuickMenuSection.FAVOURITE_SHOWS.label)
+    if (shows.isEmpty()) {
+        Hint("Hold OK on a show on the home screen, then Add to favourites.")
+        return
+    }
+    shows.take(MAX_SHOWS).forEach { show ->
+        val provider = show.preferredProvider.takeIf { it.isNotBlank() }?.let { ProviderCatalog.label(it) }
+        Tile(show.title, provider, null, Modifier.fillMaxWidth()) { onOpen(show) }
+    }
+}
+
+/** Opens the first installed app for [providerId]. False when there is none. */
+private fun openProvider(context: Context, providerId: String): Boolean {
+    if (providerId.isBlank()) return false
+    val pm = context.packageManager
+    val intent = ProviderCatalog.packages(providerId).firstNotNullOfOrNull { pkg ->
+        pm.getLeanbackLaunchIntentForPackage(pkg) ?: pm.getLaunchIntentForPackage(pkg)
+    } ?: return false
+    return runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true }.getOrDefault(false)
 }
 
 @Composable

@@ -19,6 +19,7 @@ import com.firestarterpro.templartv.data.shelf.ShelfDraft
 import com.firestarterpro.templartv.data.shelf.ShelfEntry
 import com.firestarterpro.templartv.domain.AppEntry
 import com.firestarterpro.templartv.domain.ContentCard
+import com.firestarterpro.templartv.observation.ShelfLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -37,6 +38,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** What the old (channel and app) side of the home screen hands to the new one. */
@@ -207,6 +209,26 @@ class BigBoxViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     // Opening things -------------------------------------------------------------------------------
+
+    private val shelfLauncher by lazy { ShelfLauncher(getApplication(), data.shelves) }
+
+    /**
+     * Opens a shelf tile through [ShelfLauncher] (B3), from a coroutine, so the tile also moves to
+     * the front of its shelf. Falls back to [open] when [Flag.PROVIDER_RECENT_SHELVES] is off or the
+     * entry can't be launched. [onResult] runs on the main thread.
+     */
+    fun openShelf(tile: HomeTile, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = ShelfOpen.open(
+                ref = tile.ref,
+                launcherOn = FeatureFlags.isEnabled(getApplication(), Flag.PROVIDER_RECENT_SHELVES),
+                lookup = { id -> withContext(Dispatchers.IO) { data.shelves.getById(id) } },
+                launch = { entry -> shelfLauncher.launch(entry) },
+                fallback = { open(tile) },
+            )
+            onResult(ok)
+        }
+    }
 
     /** Opens a shelf or favourite tile in its provider's app. Returns false when nothing could be opened. */
     fun open(tile: HomeTile): Boolean = when (tile.kind) {

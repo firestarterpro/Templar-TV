@@ -115,7 +115,7 @@ fun BigBoxHome(
         when (tile.kind) {
             TileKind.APP -> appMap[tile.packageName]?.let(onLaunchApp)
             TileKind.CHANNEL -> cardMap[tile.ref]?.let(onLaunchCard)
-            TileKind.SHELF -> if (!vm.open(tile)) toast("Couldn't open ${tile.title}")
+            TileKind.SHELF -> vm.openShelf(tile) { ok -> if (!ok) toast("Couldn't open ${tile.title}") }
             TileKind.FAVOURITE -> if (!vm.open(tile)) onOpenSearch()
             TileKind.ADD -> { restoreKey = tile.key; overlay = Overlay.AddShow(row.rowId) }
             TileKind.MORE -> { restoreKey = tile.key; overlay = Overlay.SeeAll(row.rowId) }
@@ -162,16 +162,27 @@ fun BigBoxHome(
 
     // Hooks other screens (the quick menu) can use.
     val latestUi by rememberUpdatedState(ui)
+    fun cycleTo(dir: Int) {
+        val list = latestUi.availableViews
+        if (list.size > 1) {
+            val i = list.indexOf(latestUi.view).coerceAtLeast(0)
+            vm.setView(list[(i + dir + list.size) % list.size])
+        }
+    }
+    // A request made while this screen wasn't showing (quick menu over another app).
+    LaunchedEffect(Unit) {
+        when (HomeActions.consumePending()) {
+            HomeRequest.ROW_MANAGER -> overlay = Overlay.RowManager
+            HomeRequest.VIEW_PICKER -> overlay = Overlay.ViewPicker
+            HomeRequest.NEXT_VIEW -> cycleTo(1)
+            HomeRequest.PREVIOUS_VIEW -> cycleTo(-1)
+            null -> Unit
+        }
+    }
     LaunchedEffect(Unit) { HomeActions.openRowManager.collect { overlay = Overlay.RowManager } }
     LaunchedEffect(Unit) { HomeActions.openViewPicker.collect { overlay = Overlay.ViewPicker } }
     LaunchedEffect(Unit) {
-        HomeActions.cycleView.collect { dir ->
-            val list = latestUi.availableViews
-            if (list.size > 1) {
-                val i = list.indexOf(latestUi.view).coerceAtLeast(0)
-                vm.setView(list[(i + dir + list.size) % list.size])
-            }
-        }
+        HomeActions.cycleView.collect { dir -> cycleTo(dir) }
     }
 
     // The first focus, once, when there is something to focus.

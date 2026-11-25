@@ -45,18 +45,46 @@ object QuickMenuController {
      * that want the old quick-settings panel start [QuickSettingsActivity] themselves) or when the
      * activity could not be started.
      */
-    fun open(context: Context): Boolean {
-        if (!isEnabled(context)) return false
-        if (VistaForeground.isForeground && requests.tryEmit(Unit)) return true
-        return runCatching {
-            context.startActivity(
-                Intent(context, QuickSettingsActivity::class.java)
-                    .setAction(ACTION_OPEN_QUICK_MENU)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
-            true
-        }.getOrDefault(false)
+    fun open(context: Context): Boolean = route(
+        enabled = isEnabled(context),
+        templarInFront = VistaForeground.isForeground,
+        openInApp = { requests.tryEmit(Unit) },
+        startActivity = {
+            runCatching {
+                context.startActivity(
+                    Intent(context, QuickSettingsActivity::class.java)
+                        .setAction(ACTION_OPEN_QUICK_MENU)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+                true
+            }.getOrDefault(false)
+        },
+    )
+
+    /**
+     * Opens the quick menu, or the old quick-settings panel when [Flag.QUICK_MENU] is off. Used by
+     * callers that must always show something (the companion API's open-menu command, the
+     * accessibility service's Settings key).
+     */
+    fun openOrLegacy(context: Context): Boolean = openOrLegacy(
+        quickMenu = { open(context) },
+        legacy = {
+            runCatching {
+                context.startActivity(Intent(context, QuickSettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                true
+            }.getOrDefault(false)
+        },
+    )
+
+    /** Pure routing for [open]. */
+    internal fun route(enabled: Boolean, templarInFront: Boolean, openInApp: () -> Boolean, startActivity: () -> Boolean): Boolean {
+        if (!enabled) return false
+        if (templarInFront && openInApp()) return true
+        return startActivity()
     }
+
+    /** Pure routing for [openOrLegacy]. */
+    internal fun openOrLegacy(quickMenu: () -> Boolean, legacy: () -> Boolean): Boolean = quickMenu() || legacy()
 
     // Layout persistence: per profile, in the B2 data layer. Hide is a flag in the stored value.
 

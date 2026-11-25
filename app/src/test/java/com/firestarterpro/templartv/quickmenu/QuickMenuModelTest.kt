@@ -50,12 +50,18 @@ class QuickMenuModelTest {
     }
 
     @Test fun moveReordersAndClamps() {
-        val moved = QuickMenuLayout.DEFAULT.move(QuickMenuSection.QUICK_SETTINGS, -2)
+        val moved = QuickMenuLayout.DEFAULT.move(QuickMenuSection.QUICK_SETTINGS, -1)
         assertEquals(
-            listOf(QuickMenuSection.QUICK_SETTINGS, QuickMenuSection.RESUME, QuickMenuSection.APPS, QuickMenuSection.TEMPLAR_SHORTCUTS),
+            listOf(
+                QuickMenuSection.RESUME, QuickMenuSection.CONTINUE_WATCHING, QuickMenuSection.FAVOURITE_SHOWS,
+                QuickMenuSection.APPS, QuickMenuSection.CHANGE_VIEW, QuickMenuSection.QUICK_SETTINGS,
+                QuickMenuSection.ROW_MANAGER, QuickMenuSection.TEMPLAR_SHORTCUTS,
+            ),
             moved.visibleSections,
         )
-        assertEquals(moved, moved.move(QuickMenuSection.QUICK_SETTINGS, -5)) // already first
+        val first = QuickMenuLayout.DEFAULT.move(QuickMenuSection.QUICK_SETTINGS, -99)
+        assertEquals(QuickMenuSection.QUICK_SETTINGS, first.sections.first().section)
+        assertEquals(first, first.move(QuickMenuSection.QUICK_SETTINGS, -5)) // already first
         val last = QuickMenuLayout.DEFAULT.move(QuickMenuSection.RESUME, 99)
         assertEquals(QuickMenuSection.RESUME, last.sections.last().section)
     }
@@ -68,10 +74,13 @@ class QuickMenuModelTest {
 
     @Test fun encodeDecodeRoundTrip() {
         val layout = QuickMenuLayout.DEFAULT
-            .move(QuickMenuSection.TEMPLAR_SHORTCUTS, -3)
+            .move(QuickMenuSection.TEMPLAR_SHORTCUTS, -99)
             .setHidden(QuickMenuSection.QUICK_SETTINGS, true)
         val stored = layout.encode()
-        assertEquals("templar_shortcuts,resume,apps,-quick_settings", stored)
+        assertEquals(
+            "templar_shortcuts,resume,continue_watching,favourite_shows,apps,change_view,row_manager,-quick_settings",
+            stored,
+        )
         assertEquals(layout, QuickMenuLayout.decode(stored))
     }
 
@@ -82,7 +91,10 @@ class QuickMenuModelTest {
         // Duplicates: first wins. Missing sections are appended, shown, in default order.
         val d = QuickMenuLayout.decode("apps, -apps ,resume")
         assertEquals(
-            listOf(QuickMenuSection.APPS, QuickMenuSection.RESUME, QuickMenuSection.QUICK_SETTINGS, QuickMenuSection.TEMPLAR_SHORTCUTS),
+            listOf(
+                QuickMenuSection.APPS, QuickMenuSection.RESUME, QuickMenuSection.CONTINUE_WATCHING, QuickMenuSection.FAVOURITE_SHOWS,
+                QuickMenuSection.CHANGE_VIEW, QuickMenuSection.ROW_MANAGER, QuickMenuSection.QUICK_SETTINGS, QuickMenuSection.TEMPLAR_SHORTCUTS,
+            ),
             d.sections.map { it.section },
         )
         assertFalse(d.isHidden(QuickMenuSection.APPS))
@@ -92,6 +104,67 @@ class QuickMenuModelTest {
         assertEquals("quick_menu", Flag.QUICK_MENU.key)
         assertFalse(Flag.QUICK_MENU.defaultEnabled)
         assertTrue(Flag.QUICK_MENU.experimental)
+    }
+
+    @Test fun layoutStoredByAnOlderBuildGainsTheNewSectionsShown() {
+        // What PR #12 could store before Continue watching, Favourite shows, Change view and Rows existed.
+        val old = QuickMenuLayout.decode("templar_shortcuts,resume,apps,-quick_settings")
+        assertEquals(s.size, old.sections.size)
+        assertTrue(old.isHidden(QuickMenuSection.QUICK_SETTINGS))
+        listOf(QuickMenuSection.CONTINUE_WATCHING, QuickMenuSection.FAVOURITE_SHOWS, QuickMenuSection.CHANGE_VIEW, QuickMenuSection.ROW_MANAGER)
+            .forEach { assertTrue(it.id, it in old.visibleSections) }
+    }
+
+    @Test fun newSectionsFollowTheirFeatureFlags() {
+        val all = QuickMenuLayout.DEFAULT
+        assertEquals(s.toList(), all.visibleSections { true })
+        val noBigBox = all.visibleSections { it != Flag.BIG_BOX_HOME }
+        assertFalse(QuickMenuSection.CHANGE_VIEW in noBigBox)
+        assertFalse(QuickMenuSection.ROW_MANAGER in noBigBox)
+        assertTrue(QuickMenuSection.CONTINUE_WATCHING in noBigBox)
+        val noRowManager = all.visibleSections { it != Flag.ROW_MANAGER }
+        assertFalse(QuickMenuSection.ROW_MANAGER in noRowManager)
+        assertTrue(QuickMenuSection.CHANGE_VIEW in noRowManager)
+        assertFalse(QuickMenuSection.CONTINUE_WATCHING in all.visibleSections { it != Flag.PROVIDER_RECENT_SHELVES })
+        assertFalse(QuickMenuSection.FAVOURITE_SHOWS in all.visibleSections { it != Flag.FAVOURITE_SHOWS })
+        // Sections without a flag are always offered.
+        assertEquals(
+            listOf(QuickMenuSection.RESUME, QuickMenuSection.APPS, QuickMenuSection.QUICK_SETTINGS, QuickMenuSection.TEMPLAR_SHORTCUTS),
+            all.visibleSections { false },
+        )
+    }
+
+    @Test fun openRoutesToInAppPanelThenActivity() {
+        var inApp = 0
+        var activity = 0
+        val emit = { inApp++; true }
+        val start = { activity++; true }
+        assertFalse(QuickMenuController.route(enabled = false, templarInFront = true, openInApp = emit, startActivity = start))
+        assertEquals(0, inApp + activity)
+        assertTrue(QuickMenuController.route(enabled = true, templarInFront = true, openInApp = emit, startActivity = start))
+        assertEquals(1 to 0, inApp to activity)
+        assertTrue(QuickMenuController.route(enabled = true, templarInFront = false, openInApp = emit, startActivity = start))
+        assertEquals(1 to 1, inApp to activity)
+        // In front, but the in-app panel did not take it: start the activity.
+        assertTrue(QuickMenuController.route(enabled = true, templarInFront = true, openInApp = { false }, startActivity = start))
+        assertEquals(2, activity)
+    }
+
+    @Test fun companionOpenMenuUsesQuickMenuThenLegacyPanel() {
+        var legacy = 0
+        assertTrue(QuickMenuController.openOrLegacy(quickMenu = { true }, legacy = { legacy++; true }))
+        assertEquals(0, legacy) // quick menu flag on: the old panel is not started
+        assertTrue(QuickMenuController.openOrLegacy(quickMenu = { false }, legacy = { legacy++; true }))
+        assertEquals(1, legacy) // flag off: the old quick-settings panel still opens
+    }
+
+    @Test fun starAndVoiceFlagsAreGone() {
+        val keys = Flag.entries.map { it.key }
+        assertFalse("star_key_capture" in keys)
+        assertFalse("custom_voice_routing" in keys)
+        assertTrue("home_return" in keys)
+        assertTrue("settings_key_capture" in keys)
+        assertFalse(Flag.SETTINGS_KEY_CAPTURE.defaultEnabled)
     }
 
     @Test fun flagKeysStayUnique() {
