@@ -38,4 +38,10 @@ One Room database, `TemplarDatabase` (version 2, same file name `templar-tv-watc
 Revert the PR. A device that already opened this build keeps a version 2 file, and an older build cannot open it (Room refuses downgrades). To go back: uninstall Templar TV (the history it holds is local only), or keep the file by exporting first (B8). Back up nothing automatically; nothing is deleted by the app.
 
 ## Verification
-(filled in after the PC build)
+Run on the Acer, 2026-11-25, branch `claude/project-thread-4rx6bu` at `1ce0bca`, JDK 17 (`C:\Program Files\Microsoft\jdk-17.0.21.102-hotspot`), Gradle 8.7. Built in a separate git worktree because the main checkout had an uncommitted owner edit to `VistaAccessibilityService.kt` (left untouched).
+
+- `:app:testDebugUnitTest`: **40 tests, 0 failures, 0 errors, 0 skipped.** ChordsTest 4, ConfidenceTest 6, DedupeKeyTest 4, MigrationTest 1, OrderingTest 4, TemplarDataTest 21.
+- MIGRATION_1_2: MigrationTest builds a v1 file by hand, then Room opens it and validates every migrated table, column, foreign key and index against the entities. It passed, so the hand-written SQL matches schema 2.
+- `:app:assembleRelease`: **BUILD SUCCESSFUL** (1m 34s). `app/build/outputs/apk/release/app-release.apk`, 19,288,658 bytes, SHA-256 `899E8F48CBDC96C6ACB21CD3F535A857A76377274B1D02677E4E0C74001CFAF9`. Not installed on the TV.
+- Changed: committed the exported `app/schemas/com.firestarterpro.templartv.data.TemplarDatabase/2.json` (`42efcf8`). No code fixes were needed.
+- Environment pitfall: the shell's default `JAVA_HOME` points at JDK 25.0.5, which makes Gradle 8.7 fail with the bare error `25.0.5`. Set `JAVA_HOME` to JDK 17 and run `gradlew --stop` first.
