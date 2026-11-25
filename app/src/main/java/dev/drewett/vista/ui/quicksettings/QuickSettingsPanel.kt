@@ -199,7 +199,7 @@ private fun PanelContent(themeMode: ThemeMode, onCycleTheme: () -> Unit, onDismi
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    "Templar TV leaves Google TV Home installed. Press HOME and select Google TV Home, or open Settings > Apps > Default apps > Home app and choose Google TV Home.",
+                    "Templar TV leaves Google TV Home installed. Press HOME and select Google TV Home, or open Settings > Apps > Default apps > Home app and choose Google TV Home. If Home keeps opening Templar TV, switch off Features > Home opens Templar.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                 )
