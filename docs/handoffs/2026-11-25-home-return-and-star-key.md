@@ -1,5 +1,7 @@
 # 2026-11-25 Home opens Templar, and the star button
 
+> **Update (combined build, 2026-11-25):** the `star_key_capture` flag, the Star button action setting and the star handling in `VistaAccessibilityService` were removed. `home_return` and `settings_key_capture` are unchanged. See `2026-11-25-combined-build.md`.
+
 ## Problem (live test, PR #6 comment 7165109551)
 On the Google TV Streamer, with Templar as the HOME role holder, a short Home press still starts Google's launcher (`launcherx/.home.HomeActivity`). Long-press Home opens Google's dashboard (`DashboardHandler`, with the Google Home panel) and must keep working. The star button arrives as `KEYCODE_MACRO_1` (313) and Google's smart-home screen opens as well.
 

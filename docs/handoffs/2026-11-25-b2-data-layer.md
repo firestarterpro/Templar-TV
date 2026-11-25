@@ -7,7 +7,7 @@ One Room database, `TemplarDatabase` (version 2, same file name `templar-tv-watc
 
 | Table | Purpose |
 | --- | --- |
-| `profiles`, `profile_settings` | Local profiles (archived, never deleted) and per-profile settings (home view, star action, ...) |
+| `profiles`, `profile_settings` | Local profiles (archived, never deleted) and per-profile settings (home view, columns count, shelf length, ...; star action and voice fallback removed 2026-11-25) |
 | `watch_history` (v1 + 3 columns) | One row per watching session: confidence, review state, evidence source |
 | `watch_evidence` | Every signal behind a match (source, confidence, detail) |
 | `match_candidates` | Possible titles kept instead of forcing a match |

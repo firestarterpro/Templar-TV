@@ -263,13 +263,9 @@ The user can confirm a match, choose another candidate, enter a title manually, 
 - A pop-up menu that opens over any app, scrolls with the D-pad, and launches without returning to the home screen. Back closes it and returns to the app.
 - **(latest)** This is the only menu: today's quick-settings panel folds into it as the Quick settings section, and the Menu key inside Templar opens it.
 - Default sections (each can be hidden or reordered): Resume, Continue Watching, Favourite Shows, pinned apps, Quick settings, Change view. Pinned footer that can't be hidden: Google Home, Google TV Home, Templar Home.
-- Triggers: the remote's star button, a keyboard shortcut, and optionally a remote key captured by the accessibility service. Long-press Home and long-press star are never used.
-- **(latest) The star button is pending the PR #8 spike** (`star_key_capture`, off by default). If the spike fails, the star button feature is dropped and the owner can pick Templar in Google's own button picker. The design below applies if it passes.
-- **(owner, 2026-11-25) Star button is chosen and changed in Templar.** Settings → Star button lists what a star press does: Quick menu (default), Favourite shows, Continue Watching, a chosen app, or Google Home panel. How it works:
-  - The star button is mapped once in Google's shortcut editor (hold star for 1–2 seconds) to a tiny companion app, "Templar Menu", with its own package. A second entry inside Templar is probably not listed by Google's picker.
-  - Each star press opens the companion, which reads Templar's setting and does that action. Changing the action later happens only in Templar.
-  - "Google Home panel" has no public way for an app to open it, so picking it shows the steps to point the star button back at Google Home in Google's editor. The quick menu keeps a Google Home tile either way.
-  - If sideloaded apps don't appear in Google's picker, the fallback is accessibility capture of the star key (`MACRO_1`), behind its own flag, default off, because of the reported volume-hold problem.
+- Triggers: a keyboard shortcut, the Menu key inside Templar, the companion API's open-menu command, and optionally the Settings key captured by the accessibility service (`settings_key_capture`, off). **Dropped 2026-11-25 (combined build):** the remote's star button is not a trigger (see below). Long-press Home and long-press star are never used.
+- **Dropped 2026-11-25 (combined build):** star button capture and the Star button setting. On the Streamer `KEYCODE_MACRO_1` (313) is a global key owned by launcherx (`dumpsys window policy`), so no accessibility service receives it (device test, `docs/handoffs/2026-11-25-home-return-and-star-key.md`). The `star_key_capture` flag, the Star button action setting, the `star_action` profile setting and the service code are removed. The "Templar Menu" companion app is not planned. The owner can still point the star at Templar in Google's own button picker (no Templar code needed).
+- **(combined build, 2026-11-25)** The quick menu now has the sections Resume, Continue watching, Favourite shows, Apps, Change view, Rows (Row Manager), Quick settings and Templar, each hideable and movable and each behind its feature flag. The pinned footer is unchanged.
 - v1 opens as a translucent screen. Keeping a video playing underneath with a system overlay is a later, separate flag.
 
 ## 18. Feature flags and user control (2026-11-25, new)
@@ -286,13 +282,12 @@ Every feature is user-toggleable. Flags move from compile-time constants to a ru
 | favouriteShows | on |
 | rowManager | on |
 | tmdbCatalog | on once a key is entered (owner approved TMDB, 2026-11-25) |
-| starButtonAction (setting, not a flag) | Quick menu |
-| starKeyCapture | off |
+| ~~starButtonAction~~ | dropped 2026-11-25 (star key cannot be captured on the Streamer) |
 | unifiedSearch | on |
 | quickMenu (includes quick settings) | on |
-| homeViews (each view is Beta; Rows always on) | Rows |
+| homeViews (each view is Beta; Rows always on) | Columns (falls back to Rows when its flag is off) |
 | home_return (PR #8 spike) | off |
-| star_key_capture (PR #8 spike) | off |
+| ~~star_key_capture~~ | dropped 2026-11-25, code removed |
 | quickMenuOverlayMode | off |
 | keyboardShortcuts | on |
 | globalShortcuts (over other apps) | off |
@@ -303,7 +298,7 @@ Every feature is user-toggleable. Flags move from compile-time constants to a ru
 | lowConfidenceReview | off |
 | focusedTileObservation | off |
 | ocrObservation | off |
-| customVoiceRouting | off (dropped with Templar voice) |
+| ~~customVoiceRouting~~ | dropped 2026-11-25, flag removed with Templar voice |
 | layoutBackup | on |
 | homeWatchdog | off |
 | diagnostics | on |

@@ -78,7 +78,7 @@ enum class Flag(
     ),
     QUICK_MENU(
         "quick_menu", false, "Quick menu",
-        "One left-side menu over any screen: Resume, your apps, quick settings and Templar shortcuts, with Google Home, Google TV Home and Templar Home always at the bottom. Replaces the quick-settings panel while on. Menu or Settings key inside Templar.",
+        "One left-side menu over any screen: Resume, Continue watching, Favourite shows, your apps, Change view, Rows, quick settings and Templar shortcuts, with Google Home, Google TV Home and Templar Home always at the bottom. Replaces the quick-settings panel while on. Menu or Settings key inside Templar.",
         experimental = true,
     ),
 }

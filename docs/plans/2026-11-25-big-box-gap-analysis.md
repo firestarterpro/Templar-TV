@@ -82,6 +82,8 @@ Need = build it. Nice = build later behind a flag. Skip = not needed or out of s
 
 ### 4.3 Voice search inside Templar across subscriptions
 
+> **Dropped 2026-11-25 (combined build):** Templar's own mic button and recognizer. Google voice search stays on the Assistant button; typed and keyboard search stay.
+
 - **Do not hijack the Assistant button.** It is Gemini's, and the plan keeps Gemini as the general assistant. Intercepting it would also be fragile. [K]
 - **Templar's own mic button** on the search screen uses `SpeechRecognizer` (or `RecognizerIntent.ACTION_RECOGNIZE_SPEECH`). On Google TV the recognition service is usually provided by the Google app, and the remote's microphone feeds it while Templar is in front. [K][V] Needs the `RECORD_AUDIO` runtime permission, which Android TV can request with a normal dialog. [K] B1 checks `SpeechRecognizer.isRecognitionAvailable()` and whether results come back without leaving Templar.
 - **Fallback:** if the recognizer is unavailable or bounces to Google, Templar keeps text search and keyboard typing, and the voice button explains why.
