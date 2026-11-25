@@ -50,8 +50,8 @@ object GoogleHomeHandoff {
 
     /** Show rollback instructions for HOME role */
     fun showRollbackInstructions() {
-        // Documentation: HOME role can be reassigned via:
-        // adb shell pm set-home LAUNCHER_PACKAGE_NAME
-        // To restore Google: adb shell pm set-home com.google.android.tvlauncher
+        // HOME can be reassigned from the Home chooser or Settings -> Apps -> Default apps -> Home app.
+        // `pm set-home` and the com.google.android.tvlauncher package name are unverified on Google TV.
+        // See docs/handoffs/2026-11-22-templar-tv-v0-foundationrollback.md
     }
 }

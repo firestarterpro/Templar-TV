@@ -163,6 +163,15 @@ private fun PanelContent(themeMode: ThemeMode, onCycleTheme: () -> Unit, onDismi
             GridTile("Screensaver", R.drawable.ic_screensaver) { open("android.settings.DREAM_SETTINGS") }
             GridTile("Date & time", R.drawable.ic_clock) { open(Settings.ACTION_DATE_SETTINGS) }
         }
+        Tile("Features", "On / off", R.drawable.ic_settings, Modifier.fillMaxWidth()) {
+            runCatching {
+                context.startActivity(
+                    Intent(context, com.firestarterpro.templartv.FeaturesActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+            onDismiss()
+        }
         Tile("Reload Vista", "", R.drawable.ic_reload, Modifier.fillMaxWidth()) {
             (context as? android.app.Activity)?.recreate()
             onDismiss()

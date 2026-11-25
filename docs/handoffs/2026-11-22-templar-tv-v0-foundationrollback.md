@@ -10,8 +10,11 @@ Templar TV becomes the normal HOME interface, but Google's stock launcher must r
 
 ### HOME Role Reassignment
 - **Current HOME**: `com.firestarterpro.templartv`
-- **Restore Google Home**: `adb shell pm set-home com.google.android.tvlauncher`
-- **Verify**: `adb shell dumpsys package com.google.android.tvlauncher | grep -E "home|default"`
+- **Restore Google Home (corrected 2026-11-25)**: there is no verified `pm set-home` command on Google TV, and `com.google.android.tvlauncher` is probably not the Google TV launcher package (expected `com.google.android.apps.tv.launcherx`, not yet checked on the device). Use, in order:
+  1. Press Home and, if Android shows a "Home app" chooser, pick Google TV.
+  2. Settings → Apps → Default apps (or Special app access) → Home app → Google TV, where the device offers it.
+  3. Last resort, always reversible: `adb uninstall com.firestarterpro.templartv` (Google TV is never touched; HOME falls back to it).
+- **Find the real launcher package**: `adb shell cmd package resolve-activity -a android.intent.action.MAIN -c android.intent.category.HOME` while Templar TV is not installed.
 
 ### ADB-Granted Permissions
 | Permission | Grant Command | Revoke Command |
@@ -52,7 +55,7 @@ Templar TV becomes the normal HOME interface, but Google's stock launcher must r
 
 ## Restoration Steps (Google HOME)
 1. Uninstall Templar TV APK (optional - Google Home remains installed)
-2. Or reassign HOME role: `adb shell pm set-home com.google.android.tvlauncher`
+2. Or reassign HOME in Settings → Apps → Default apps → Home app, or via the Home chooser (see HOME Role Reassignment above; `pm set-home` is unverified)
 3. Re-enable Google Now on Tap/Assistant if disabled
 4. Verify HOME: Long-press home button should show Google launcher
 

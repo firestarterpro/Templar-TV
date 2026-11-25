@@ -1,44 +1,82 @@
 package com.firestarterpro.templartv
 
+import android.content.Context
+import android.content.SharedPreferences
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+
 /**
- * Centralized feature flag mechanism for Templar TV.
- * 
- * Experimental features default off.
- * Passive and harmless foundations may be enabled only when they preserve current behavior.
- * Feature status should be inspectable from Templar TV settings or diagnostics when practical.
+ * Runtime feature flags for Templar TV.
+ *
+ * Every flag has a built-in default and can be flipped from Settings → Features without a rebuild.
+ * Experimental features default off. Passive foundations default on only when they preserve current
+ * behavior. Values live in a small SharedPreferences file so they can be read synchronously from
+ * services (for example the accessibility service) as well as observed as a [Flow] from the UI.
  */
+enum class Flag(
+    val key: String,
+    val defaultEnabled: Boolean,
+    val label: String,
+    val description: String,
+    val experimental: Boolean = false,
+) {
+    WATCH_HISTORY("watch_history", true, "Watch history", "Remember what you watched, locally, for Jump back in."),
+    MEDIA_SESSION_OBSERVATION("media_session_observation", true, "Playback observation", "Read what is playing from apps' media sessions."),
+    PROVIDER_ROWS("provider_rows", true, "Provider rows", "Show rows for your streaming providers."),
+    PREVIEW_AND_UPCOMING("preview_and_upcoming", true, "New and upcoming", "Show new, upcoming and leaving-soon sections."),
+    GOOGLE_HOME_HANDOFF("google_home_handoff", true, "Google Home shortcut", "Keep a way to open Google Home from Templar TV."),
+    DIAGNOSTICS("diagnostics", true, "Diagnostics", "Keep local diagnostics about Templar TV itself."),
+    JELLYFIN("jellyfin", false, "Jellyfin", "Show personal media from your Jellyfin server.", experimental = true),
+    OCR_OBSERVATION("ocr_observation", false, "Screen reading (OCR)", "Opt-in screen text matching for watch history.", experimental = true),
+    FOCUSED_TILE_OBSERVATION("focused_tile_observation", false, "Focused tile observation", "Use the focused tile as watch evidence.", experimental = true),
+    CUSTOM_VOICE_ROUTING("custom_voice_routing", false, "Templar voice search", "Route media voice commands through Templar.", experimental = true),
+    LOW_CONFIDENCE_REVIEW("low_confidence_review", false, "Review queue", "Send uncertain matches to a review row.", experimental = true),
+    SETTINGS_KEY_CAPTURE(
+        "settings_key_capture", false, "Capture Settings key",
+        "Open Templar's quick menu from the remote's Settings key in any app. Off keeps Google's dashboard (and its Google Home panel) on that key. Needs the accessibility service on.",
+        experimental = true,
+    ),
+}
+
 object FeatureFlags {
 
-    // Watch history
-    val watchHistory = true  // Enabled by default to preserve current "Jump back in" behavior
+    private const val PREFS = "templar_feature_flags"
 
-    // Media session observation
-    val mediaSessionObservation = true  // Enabled by default
+    private fun prefs(context: Context): SharedPreferences =
+        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    // Jellyfin integration
-    val jellyfin = false  // Disabled by default, experimental
+    fun isEnabled(context: Context, flag: Flag): Boolean =
+        runCatching { prefs(context).getBoolean(flag.key, flag.defaultEnabled) }.getOrDefault(flag.defaultEnabled)
 
-    // Provider-specific rows
-    val providerRows = true  // Enabled by default
+    fun set(context: Context, flag: Flag, enabled: Boolean) {
+        prefs(context).edit().putBoolean(flag.key, enabled).apply()
+    }
 
-    // Preview and upcoming titles
-    val previewAndUpcoming = true  // Enabled by default
+    /** Back to the built-in default (removes the stored override). */
+    fun reset(context: Context, flag: Flag) {
+        prefs(context).edit().remove(flag.key).apply()
+    }
 
-    // OCR observation (experimental)
-    val ocrObservation = false  // Disabled by default, experimental
+    /** Emits the current state of every flag now, and again whenever any flag changes. */
+    fun observe(context: Context): Flow<Map<Flag, Boolean>> = callbackFlow {
+        val p = prefs(context)
+        fun snapshot() = Flag.entries.associateWith { isEnabled(context, it) }
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> trySend(snapshot()) }
+        p.registerOnSharedPreferenceChangeListener(listener)
+        trySend(snapshot())
+        awaitClose { p.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.distinctUntilChanged()
 
-    // Focused-tile observation (experimental)
-    val focusedTileObservation = false  // Disabled by default, experimental
+    /** Registers a callback for flag changes. Keep the returned listener and pass it to [unregister]. */
+    fun register(context: Context, onChange: () -> Unit): SharedPreferences.OnSharedPreferenceChangeListener {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> onChange() }
+        prefs(context).registerOnSharedPreferenceChangeListener(listener)
+        return listener
+    }
 
-    // Custom voice routing
-    val customVoiceRouting = false  // Disabled by default, experimental
-
-    // Low confidence review queue
-    val lowConfidenceReview = false  // Disabled by default, experimental
-
-    // Google Home handoff
-    val googleHomeHandoff = true  // Enabled by default for reversible Google Home access
-
-    // Diagnostics
-    val diagnostics = true  // Enabled by default for monitoring
+    fun unregister(context: Context, listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs(context).unregisterOnSharedPreferenceChangeListener(listener)
+    }
 }
