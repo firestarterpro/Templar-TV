@@ -63,7 +63,7 @@ Revoke overlay (back to the state before install):
 Read-only checks from the PC plus taps on the tablet's own UI:
 - PASS: Templar TV running, no crash in logcat. HOME still the stock launcher. Accessibility services: none.
 - PASS: port 8780 listening with Companion API on; `GET /status` answers from the LAN, `authorized:false` without a token.
-- PASS: tablet shows "Paired with Templar TV 0.1.0 at 192.168.0.166".
+- PASS: tablet shows "Paired with Templar TV 0.1.0 at <streamer-ip>".
 - PASS: Open app from the tablet (Paramount+ came to the front on the TV).
 - PASS: Open Templar menu from the tablet (QuickSettingsActivity came to the front over Paramount+).
 - PASS: Pin a favourite app (DIRECTV) from the tablet.

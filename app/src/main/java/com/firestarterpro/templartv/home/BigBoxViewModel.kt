@@ -102,13 +102,23 @@ class BigBoxViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    /** One time only: older installs have the Apps row last (right side); put it first (left side). Later moves stay. */
+    /**
+     * Once per profile: older installs have the Apps row last (right side); put it first (left side).
+     * The done mark is set only when the move worked, so a failed try runs again next start.
+     * Later moves stay.
+     */
     private suspend fun moveAppsLeftOnce() {
         val prefs = getApplication<Application>().getSharedPreferences("templar_migrations", android.content.Context.MODE_PRIVATE)
-        if (prefs.getBoolean("apps_left_v1", false)) return
-        data.rows.move(profileId.value, com.firestarterpro.templartv.data.layout.DefaultRows.APPS, 0)
-        prefs.edit().putBoolean("apps_left_v1", true).apply()
+        val ids = (data.profiles.observeProfiles().first().map { it.id } + profileId.value).distinct()
+        for (id in ids) {
+            val mark = "apps_left_v1:$id"
+            if (prefs.getBoolean(mark, false) || (id == com.firestarterpro.templartv.data.ProfileIds.DEFAULT && prefs.getBoolean("apps_left_v1", false))) continue
+            if (data.rows.move(id, com.firestarterpro.templartv.data.layout.DefaultRows.APPS, 0)) prefs.edit().putBoolean(mark, true).apply()
+        }
     }
+
+    /** Puts an app from behind "See all apps" at [index] of the Apps row, so it can be moved there. */
+    fun bringAppInto(packageName: String, index: Int) = launchIo { moveApp(packageName, index) }
 
     fun setExternal(input: ExternalInput) {
         external.value = input.copy(appLayoutVersion = external.value.appLayoutVersion)

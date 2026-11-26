@@ -13,7 +13,7 @@ class JellyfinConfig(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("templar_jellyfin", Context.MODE_PRIVATE)
 
     var serverUrl: String
-        get() = prefs.getString("url", DEFAULT_URL).orEmpty().trim().trimEnd('/')
+        get() = prefs.getString("url", "").orEmpty().trim().trimEnd('/')
         set(v) { prefs.edit().putString("url", v.trim().trimEnd('/')).apply() }
 
     var apiKey: String
@@ -28,7 +28,8 @@ class JellyfinConfig(context: Context) {
     val isConfigured: Boolean get() = serverUrl.isNotEmpty() && apiKey.isNotEmpty()
 
     companion object {
-        const val DEFAULT_URL = "http://192.168.0.150:8096"
+        /** Shown as a hint only. The real address is typed on the TV and stays there (no home IPs in git). */
+        const val URL_HINT = "http://<server address>:8096"
     }
 }
 
@@ -111,11 +112,27 @@ object JellyfinClient {
         runCatching { fetch(config, userId(config), "ParentId=$parentId&SortBy=ParentIndexNumber,IndexNumber,SortName") }
     }
 
+    /** Reads every page (500 at a time), so big libraries are not cut off. */
     private fun fetch(config: JellyfinConfig, uid: String, q: String): List<JellyfinItem> {
         val base = config.serverUrl
-        val items = JSONObject(get("$base/Users/$uid/Items?$q&Limit=2000&Fields=ProductionYear", config.apiKey)).getJSONArray("Items")
-        return (0 until items.length()).map { items.getJSONObject(it) }.map { o -> o.toItem(base) }
+        val out = ArrayList<JellyfinItem>()
+        var start = 0
+        while (true) {
+            val page = JSONObject(get("$base/Users/$uid/Items?$q&StartIndex=$start&Limit=$PAGE&Fields=ProductionYear", config.apiKey))
+            val items = page.getJSONArray("Items")
+            (0 until items.length()).mapTo(out) { items.getJSONObject(it).toItem(base) }
+            start += items.length()
+            if (!morePages(items.length(), start, page.optInt("TotalRecordCount", -1))) break
+        }
+        return out
     }
+
+    private const val PAGE = 500
+    private const val MAX_ITEMS = 50_000
+
+    /** Keep reading while the last page was full and the total (when known) isn't reached yet. */
+    fun morePages(pageSize: Int, readSoFar: Int, total: Int): Boolean =
+        pageSize >= PAGE && readSoFar < MAX_ITEMS && (total < 0 || readSoFar < total)
 
     internal fun JSONObject.toItem(base: String): JellyfinItem {
         val id = getString("Id")

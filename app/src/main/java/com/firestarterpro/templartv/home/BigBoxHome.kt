@@ -125,6 +125,7 @@ fun BigBoxHome(
     }
 
     // "Move" chosen in the app menu: lift that app's tile and let the D-pad place it.
+    var broughtIn by remember { mutableStateOf(false) }
     LaunchedEffect(moveAppRequest, ui.ready, rows) {
         val pkg = moveAppRequest ?: return@LaunchedEffect
         if (!ui.ready || rows.isEmpty()) return@LaunchedEffect
@@ -133,7 +134,14 @@ fun BigBoxHome(
         if (row != null && tile != null) {
             vm.startMove(row, tile)
             focus.request(tile.key)
+        } else if (row != null && row.moreTiles.any { it.packageName == pkg } && !broughtIn) {
+            // From "See all apps": bring it to the end of the visible row first; this effect runs
+            // again when the rows update, finds the tile and lifts it.
+            broughtIn = true
+            vm.bringAppInto(pkg, (row.realTiles.size - 1).coerceAtLeast(0))
+            return@LaunchedEffect
         }
+        broughtIn = false
         onMoveAppHandled()
     }
 
@@ -304,6 +312,7 @@ fun BigBoxHome(
                 overlay = Overlay.None
                 refocus(focus.focusedKey)
             },
+            onAppTileLongPress = { tile -> appMap[tile.packageName]?.let(onAppLongPress) },
             onHideRow = { row ->
                 val col = row.indexOf(focus.focusedKey ?: "").coerceAtLeast(0)
                 val next = HomeRules.focusAfterRowHidden(rows, row.rowId, col).firstOrNull()
@@ -369,6 +378,7 @@ private fun Overlays(
     onApplyView: (HomeView) -> Unit,
     onCancelView: () -> Unit,
     onHideRow: (HomeRowModel) -> Unit,
+    onAppTileLongPress: (HomeTile) -> Unit,
 ) {
     fun rowOf(id: String) = rows.firstOrNull { it.rowId == id }
 
@@ -483,7 +493,11 @@ private fun Overlays(
                 title = row.title,
                 tiles = row.moreTiles,
                 onClick = { tile -> onClose(restoreKey); onOpenTile(row, tile) },
-                onLongClick = { tile -> onSetOverlay(Overlay.TileMenu(row.rowId, tile)) },
+                onLongClick = { tile ->
+                    // Apps get the same menu as in the row (Move, Hide, App info, ...).
+                    if (tile.kind == TileKind.APP) { onClose(null); onAppTileLongPress(tile) }
+                    else onSetOverlay(Overlay.TileMenu(row.rowId, tile))
+                },
                 onDismiss = { onClose(restoreKey) },
             )
         }

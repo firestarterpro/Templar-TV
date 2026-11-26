@@ -2,7 +2,7 @@
     # Templar TV tabs + long-press fix (2026-11-26). Windows PowerShell 5.1. Builds on the PC (JDK 17), installs ONLY on the Streamer.
     # Output is copied to the clipboard when the script ends.
     $adb  = 'C:\Android\Sdk\platform-tools\adb.exe'
-    $dev  = '192.168.0.166:5555'
+    $dev  = if ($env:TEMPLAR_STREAMER) { $env:TEMPLAR_STREAMER } else { Read-Host 'Streamer adb address (ip:5555)' }
     $pkg  = 'com.firestarterpro.templartv'
     $tree = 'C:\Templar Archives\Robotics Facility\Templar-TV-combine'
     $br   = 'claude/project-thread-jv7f8v'

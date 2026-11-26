@@ -10,7 +10,7 @@ PR #15 and #17 merged to main (#11 to #14 closed as folded into #15).
 - Not compiled/tested in the cloud (no Android SDK); the PC build is the first compile.
 
 ## Jellyfin tabs (same day)
-- **My Movies** and **Music** now list movies and albums from Jellyfin (`JellyfinClient`, `JellyfinScreen`), with posters/covers. Default server `http://192.168.0.150:8096`.
+- **My Movies** and **Music** now list movies and albums from Jellyfin (`JellyfinClient`, `JellyfinScreen`), with posters/covers. Default server `http://<jellyfin-host>:8096`.
 - Server address and API key are entered in the tab (setup form, "Server settings" tile at the end of the grid) and stored in preferences `templar_jellyfin` on the TV only. Never in git. No key: the tab shows the setup form. Server down or key rejected: it shows the error with Try again.
 - Select opens the Jellyfin app. It first tries a `jellyfin://items/ID` link; if the app can't take it, it just opens Jellyfin and a toast names the title. The deep link is untested.
 - Manifest now allows cleartext HTTP (`usesCleartextTraffic`) because the LAN server is plain HTTP.
@@ -22,7 +22,7 @@ Typing a 32-character key with the remote was too painful. While the Jellyfin se
 ## Full library inside Templar (same day)
 - Tabs: Templar TV, My Movies, My Shows (new), My Music.
 - Browse in Templar: series → seasons → episodes, album → tracks (Jellyfin `ParentId` queries). Back goes up a level.
-- Play in Templar: `JellyfinPlayerActivity` (media3 ExoPlayer 1.4.1, new dependency). Direct stream of the original file with the key in the `Authorization: MediaBrowser` header (never in the URL). Episodes and tracks queue the rest of the season/album. No transcoding: a file the Streamer can't decode shows the player's error. Resume position and watch-state sync with Jellyfin are not built.
+- Play in Templar: `JellyfinPlayerActivity` (media3 ExoPlayer 1.4.1, new dependency). Direct stream of the original file with the key in the `Authorization: MediaBrowser` header (never in the URL). Episodes and tracks queue the rest of the season/album. No transcoding: files whose only audio is DTS or TrueHD probably play with no sound (the Streamer can't decode them and there is no transcoding yet); that belongs with the transcoding work. Resume position and watch-state sync with Jellyfin are not built.
 - The Jellyfin app is no longer opened by Templar.
 
 ## Focus fix (same day)
@@ -40,3 +40,12 @@ Opening a show or album jumped back to the Templar TV tab: the focused tile vani
 - Library lists come from the real libraries of the matching type; libraries named "... (preview)" are skipped, and repeated title+artist/year are shown once.
 - Flags (all default on): `jellyfin` (now default on, no longer experimental), `library_tabs`, `jellyfin_web_setup` (port 8781 page), `app_move_hide`.
 - CI (`.github/workflows/build.yml`) now runs unit tests before the release build. New tests: `JellyfinLogicTest`, `AppLayoutTest`.
+
+## Review round 2 (same day)
+- The Jellyfin key (`templar_jellyfin.xml`) is excluded from Android backup and device transfer (`backup_rules.xml`, `data_extraction_rules.xml`) and masked in the setup field and web page.
+- Library lists page through Jellyfin 500 at a time (capped at 50,000) instead of stopping at 2,000.
+- No home LAN addresses in code or current docs: the Jellyfin address has no built-in default (the TV keeps the one already saved), install scripts read `$env:TEMPLAR_STREAMER` or ask. History is not rewritten.
+- Apps under "See all apps" get the same hold-OK menu; Move brings the app into the visible row, then lifts it.
+- The apps-left migration runs per profile and marks itself done only when the move worked.
+- README and manifest wording now say what Templar sends on the network.
+- Later, with transcoding: files whose only audio is DTS or TrueHD probably play silent on the Streamer.

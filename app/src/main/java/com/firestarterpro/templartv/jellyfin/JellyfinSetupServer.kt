@@ -75,6 +75,7 @@ class JellyfinSetupServer(
         }
         val url = f["url"].orEmpty().trim().ifEmpty { defaultUrl }
         val key = f["key"].orEmpty().trim()
+        if (url.isEmpty()) return page("The server address is empty.")
         if (key.isEmpty()) return page("The API key is empty.")
         onSave(url, key)
         return "<!doctype html><meta name=viewport content='width=device-width'><body style='font-family:sans-serif;padding:24px'>" +
@@ -88,8 +89,8 @@ class JellyfinSetupServer(
 <h2>Templar TV: connect Jellyfin</h2>$msg
 <form method=post>
 <p>Code shown on the TV<br><input name=code inputmode=numeric autocomplete=off style='font-size:20px;width:100%'></p>
-<p>Server address<br><input name=url value='${esc(defaultUrl)}' style='font-size:18px;width:100%'></p>
-<p>API key (Jellyfin dashboard, API Keys)<br><input name=key autocomplete=off style='font-size:18px;width:100%'></p>
+<p>Server address<br><input name=url value='${esc(defaultUrl)}' placeholder='${esc(JellyfinConfig.URL_HINT)}' style='font-size:18px;width:100%'></p>
+<p>API key (Jellyfin dashboard, API Keys)<br><input name=key type=password autocomplete=off style='font-size:18px;width:100%'></p>
 <p><button style='font-size:20px;padding:10px 24px'>Save to TV</button></p>
 </form><p style='color:#666'>The key is saved on the TV only.</p></body></html>"""
     }
