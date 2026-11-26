@@ -7,7 +7,7 @@ Evidence labels: **[doc]** from Google/Jellyfin documentation or search results,
 
 Goal: when Templar TV is not the active launcher (or a family member's TV only has the stock launcher), your music, movies and recently played should still be one or two clicks away from the Google TV home screen.
 
-**Honest ceiling: about 55-65%.** The stock launcher is Google's code. It has no plugin API for custom sections, custom tab names ("My Movies", "Music") or custom app layout. What it does accept from apps is a small set of Google-defined surfaces: the apps row, the Watch Next row, and Google's Engage/recommendation data. So the stock launcher can get you *entry points and a Continue Watching row*, but never a "Templar-style" screen. Templar TV stays the place for that.
+**Honest ceiling: about 55-65%.** The stock launcher is Google's code. It has no plugin API for custom sections, custom tab names ("My Movies", "My Music") or custom app layout. What it does accept from apps is a small set of Google-defined surfaces: the apps row, the Watch Next row, and Google's Engage/recommendation data. So the stock launcher can get you *entry points and a Continue Watching row*, but never a "Templar-style" screen. Templar TV stays the place for that.
 
 ## Rules kept
 No root, no system package removal, nothing disabled. Every option below is undone in the settings screen or with one `adb` line listed under it.
@@ -27,8 +27,8 @@ No root, no system package removal, nothing disabled. Every option below is undo
 ### 1. Jellyfin + Tailscale + pinned apps (best single step)
 - Jellyfin's Android TV app installs from Play Store on any Google TV and handles Music and Movies natively. [doc: jellyfin.org androidtv posts]
 - Family sharing route is owned by the "Share music and videos with family" thread: **Tailscale node sharing, no public exposure**. This doc does not recommend a different route. Public options (Tailscale Funnel, Cloudflare Tunnel) are only an alternative if family cannot install Tailscale, and they expose the server publicly.
-- On the stock home: Google TV lets you reorder the "Your apps" row and pick favourite apps (long-press an app, then Move). [doc: support.google.com/chromecast/answer/12390692] Put Jellyfin first. That is the closest to "My Movies / Music" you can get without a custom launcher.
-- Create separate Jellyfin libraries named exactly "My Movies" and "Music" so the names match your Templar tabs everywhere.
+- On the stock home: Google TV lets you reorder the "Your apps" row and pick favourite apps (long-press an app, then Move). [doc: support.google.com/chromecast/answer/12390692] Put Jellyfin first. That is the closest to "My Movies / My Music" you can get without a custom launcher.
+- Create separate Jellyfin libraries named exactly "My Movies" and "My Music" so the names match your Templar tabs everywhere.
 - Rollback: unpin or uninstall the app. Nothing system-level changes.
 
 ### 2. Watch Next / Continue Watching
@@ -38,7 +38,7 @@ No root, no system package removal, nothing disabled. Every option below is undo
 - Rollback: Settings, Apps, the app, Clear data, or the row's "Remove from Continue Watching".
 
 ### 3. Templar TV as HOME (current build)
-Already built: Templar is a HOME candidate; short Home returns to Templar, long-press Home and the star button still reach Google Home. [mem] This is the only route to real custom sections, so it carries most of the "feels like Templar" value. Family TVs would install the same APK if you want it, no Google account change needed.
+Already built: Templar is a HOME candidate; long-press Home and the star button still reach Google Home. [mem] A short Home press returns to Templar only with the experimental `home_return` flag turned on (off by default; it also needs the accessibility service on and Templar set as Home app). This is the only route to real custom sections, so it carries most of the "feels like Templar" value. Family TVs would install the same APK if you want it, no Google account change needed.
 Rollback: Settings, Apps, Default apps, Home app, pick Google TV (path varies by version). [guess on exact menu name]
 
 ### 4. Apps-only mode
@@ -48,7 +48,7 @@ Google TV has an Apps-only mode that strips recommendations and leaves a plain a
 A tiny launcher-visible activity ("Templar Music", "Templar Movies") that deep-links into the Jellyfin library or Templar sections. Shows as an app tile in the stock Apps row, so it can be pinned first. Cheap, and works even if the user keeps the stock launcher. Rollback: uninstall.
 
 ### 6. adb-only tweaks
-`adb shell pm` and `settings` can change the default HOME role holder and clear Watch Next data, but nothing that rearranges stock sections. Not worth a plan beyond what option 3 already documents. All adb lines need `-s 192.168.0.166:5555` because the tablet is also attached. [mem]
+`adb shell pm` and `settings` can change the default HOME role holder and clear Watch Next data, but nothing that rearranges stock sections. Not worth a plan beyond what option 3 already documents. All adb lines need `-s <streamer-ip>:5555` because the tablet is also attached. [mem]
 
 ## Family sharing (affects the end goal)
 - Phones and TVs: Jellyfin apps exist for Android TV/Google TV, Android, iOS, and web. One account per person keeps each watch history separate.
