@@ -1,7 +1,7 @@
 # Templar TV Rules
 
 <!-- stack-sync: rules header v1 -->
-Agent rules: follow [firestarterpro/stacks-attacks `AGENTS.md`](https://github.com/firestarterpro/stacks-attacks/blob/main/AGENTS.md) (local clone `C:\Templar Archives\Cybernetics Core\stacks-attacks\AGENTS.md`). Registry record: `index/sources/proj-templar-tv.md` in stacks-attacks. This file adds only what is specific to this repo.
+Agent rules: follow [firestarterpro/stacks-attacks `AGENTS.md`](https://github.com/firestarterpro/stacks-attacks/blob/main/AGENTS.md). Registry record: `index/sources/proj-templar-tv.md` in stacks-attacks. This file adds only what is specific to this repo.
 
 ## Goal
 Build a reversible, daily-use Google TV launcher named Templar TV while retaining the stock Google launcher and Google's Gemini voice experience.
