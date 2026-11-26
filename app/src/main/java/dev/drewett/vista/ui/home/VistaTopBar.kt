@@ -61,11 +61,9 @@ import java.util.Date
 import java.util.Locale
 
 enum class VistaTab(val label: String) {
-    FOR_YOU("For you"),
-    MOVIES("Movies"),
-    SHOWS("Shows"),
-    APPS("Apps"),
-    LIBRARY("Library"),
+    FOR_YOU("Templar TV"),
+    MOVIES("My Movies"),
+    MUSIC("Music"),
 }
 
 private val BarHeight = 48.dp

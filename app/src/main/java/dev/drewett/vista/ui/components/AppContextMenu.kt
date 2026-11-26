@@ -14,7 +14,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,8 +58,24 @@ fun AppContextMenu(
     val firstItem = remember { FocusRequester() }
     LaunchedEffect(app.packageName) { runCatching { firstItem.requestFocus() } }
 
+    // The menu opens while the OK button is still held down. Without this guard the held key
+    // (its repeats and its release) lands on "Open" and launches the app straight away.
+    // Select keys are swallowed until the button is released, or 1.5 s have passed.
+    var armed by remember(app.packageName) { mutableStateOf(false) }
+    LaunchedEffect(app.packageName) { delay(1500); armed = true }
+
     Box(
-        Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)),
+        Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.6f))
+            .onPreviewKeyEvent { e ->
+                val select = e.key == Key.DirectionCenter || e.key == Key.Enter || e.key == Key.NumPadEnter
+                when {
+                    armed || !select -> false
+                    e.type == KeyEventType.KeyUp -> { armed = true; true }
+                    else -> true
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
         Column(

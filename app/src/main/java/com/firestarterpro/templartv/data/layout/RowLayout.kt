@@ -100,6 +100,7 @@ object DefaultRows {
             RowLayoutEntry(profileId, id, kind, provider = provider, visible = visible, tileSize = size)
 
         val ordered = listOf(
+            row(APPS, RowKind.APPS),
             row(CONTINUE_WATCHING, RowKind.CONTINUE_WATCHING, size = TileSize.LARGE),
             row(FAVOURITE_SHOWS, RowKind.FAVOURITE_SHOWS, size = TileSize.LARGE),
             row(RECENTLY_ADDED, RowKind.RECENTLY_ADDED),
@@ -114,7 +115,6 @@ object DefaultRows {
             row(NEW_UPCOMING, RowKind.NEW_UPCOMING),
             row(LEAVING_SOON, RowKind.LEAVING_SOON),
             row(REVIEW, RowKind.REVIEW),
-            row(APPS, RowKind.APPS),
         )
         return ordered.mapIndexed { index, r -> r.copy(position = index) }
     }

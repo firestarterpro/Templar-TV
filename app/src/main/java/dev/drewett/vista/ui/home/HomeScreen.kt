@@ -23,10 +23,9 @@ import com.firestarterpro.templartv.Flag
 import com.firestarterpro.templartv.google.GoogleHomeHandoff
 import com.firestarterpro.templartv.home.BigBoxHome
 import com.firestarterpro.templartv.ui.VistaSignals
-import com.firestarterpro.templartv.ui.apps.AppsScreen
 import com.firestarterpro.templartv.ui.components.AppContextMenu
 import com.firestarterpro.templartv.ui.content.ContentGrid
-import com.firestarterpro.templartv.ui.content.LibraryScreen
+import com.firestarterpro.templartv.ui.content.MusicScreen
 import com.firestarterpro.templartv.ui.content.SearchScreen
 
 @Composable
@@ -96,21 +95,8 @@ fun HomeScreen(
                     resetSignal = resetSignal,
                 )
 
-            VistaTab.MOVIES -> ContentGrid("Movies", movies, viewModel::launchContent, contentFocus = contentFocus)
-            VistaTab.SHOWS -> ContentGrid("Shows", shows, viewModel::launchContent, contentFocus = contentFocus)
-            VistaTab.APPS -> if (apps.isEmpty()) Loading() else AppsScreen(
-                apps = apps,
-                onLaunch = viewModel::launch,
-                onLongPress = { menuApp = it },
-                contentFocus = contentFocus,
-            )
-            VistaTab.LIBRARY -> LibraryScreen(
-                favourites = favouriteApps,
-                continueWatching = continueWatching,
-                onLaunchApp = viewModel::launch,
-                onLaunchContent = viewModel::launchContent,
-                contentFocus = contentFocus,
-            )
+            VistaTab.MOVIES -> ContentGrid("My Movies", movies, viewModel::launchContent, contentFocus = contentFocus)
+            VistaTab.MUSIC -> MusicScreen(contentFocus = contentFocus)
         }
 
         VistaTopBar(
