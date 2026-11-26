@@ -179,6 +179,8 @@ Never use colour alone for these; use shape and a text label in the focused-tile
 
 ### 6.1 Star button setting (owner answer, 2026-11-25)
 
+> **Dropped 2026-11-25 (combined build):** the star key cannot be captured on the Streamer, so this setting and the "Templar Menu" companion are not built. Kept as a record.
+
 Matches canonical plan section 17.2 (PR #4, commit 3adf1da).
 
 Settings → Star button, choices: **Quick menu (default)**, Voice search, Favourite Shows, Continue Watching, a chosen app, or Google Home panel.
@@ -235,7 +237,7 @@ Add to section 20 (validation), per build that touches the home screen:
 
 ## 9. Owner answers (2026-11-25)
 
-1. **Star button:** chosen and changed in Templar. Default is the quick menu. See section 6.1.
+1. ~~**Star button:** chosen and changed in Templar.~~ Dropped 2026-11-25 (see 6.1).
 2. **Quick settings vs quick menu:** owner said "you choose, and explore more settings". Decision: **fold quick settings into the quick menu** as one section, so there is one menu and one trigger. The Menu key inside Templar opens the same quick menu. The full set of options lives in a proper Settings screen, mapped in section 11.
 3. **Provider rows:** owner wants something "totally different" from left-to-right rows, with a choice of views on the TV. See section 10. Inside any view, each provider still shows one "recently played" shelf by default, with the provider's own rows behind "More from …" (a per-shelf option can show them inline).
 

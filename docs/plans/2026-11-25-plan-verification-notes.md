@@ -1,5 +1,7 @@
 # Templar TV big-box plan: platform verification notes (2026-11-25)
 
+> **Dropped 2026-11-25 (combined build):** Templar's own voice recognizer (2.1, decision 5.1, the S1 spike, the voice fallback setting) and star button capture (2.3, 4a, decision 5.2, star steps in section 7) are dropped. Device test: `KEYCODE_MACRO_1` is a global key owned by launcherx and never reaches Templar. Their flags, settings and code were removed in the combined build (`docs/handoffs/2026-11-25-combined-build.md`). The text below is kept as the record of why.
+
 Review notes only. No code changed. This checks the [K] and [V] claims in
 [2026-11-25-big-box-gap-analysis.md](2026-11-25-big-box-gap-analysis.md) against Android and Google TV sources.
 
@@ -25,7 +27,7 @@ Five things in the plan are promised more firmly than the platform supports. Non
 
 ## 2. The five flagged areas in detail
 
-### 2.1 SpeechRecognizer on Google TV
+### 2.1 SpeechRecognizer on Google TV (dropped 2026-11-25)
 
 - Google's help page says the remote mic opens when you press and hold the Assistant button. It says nothing about third-party apps. [E]
 - The plan line "the remote's microphone feeds it while Templar is in front" is therefore unverified. The Streamer has no built-in mic for apps to fall back on. [K]
@@ -47,7 +49,7 @@ Five things in the plan are promised more firmly than the platform supports. Non
 - New fact: Google's May 2026 developer post says "the legacy Watch Next API ... will lose support in the 2nd half of 2027", and the FAQ says all new Continue Watching integrations must use Engage. [E] Provider rows will thin out over the next year.
 - Effect on the plan: MediaSession, Templar launches, and manual adds are the long-term sources. Provider rows are a bonus. The per-provider shelves in B4 must look right with zero provider rows.
 
-### 2.3 Star button launching an app entry
+### 2.3 Star button launching an app entry (dropped 2026-11-25)
 
 - The star button sends key code `MACRO_1` (313) on firmware UTTK.260317.003, Android 14. Netflix is `BUTTON_4`, YouTube is `BUTTON_3`. [E-weak: two merged community PRs, October 2026]
 - Google's help page lists three shortcut types: Google Home panel, a favourite app, or device inputs. For apps it says only "Select an app on the list". It does not say whether sideloaded apps appear or whether an app can appear twice. [E]
@@ -107,6 +109,8 @@ Five things in the plan are promised more firmly than the platform supports. Non
 
 ## 4a. Owner decisions folded in (2026-11-25)
 
+> Star button items below: dropped 2026-11-25 (see banner at top).
+
 - **Star button is a Templar setting.** Settings → Shortcuts → Star button, with a list such as: quick menu, voice search, favourite shows, a chosen app, or nothing. Changeable at any time, stored per profile, included in backup.
 - **Platform limit on that setting.** Templar can only choose the action if the star press reaches Templar. Two routes, best first:
   1. In Google's own picker, map the star once to a tiny "Templar Button" companion app. Templar's setting then decides what that press opens. No key capture needed. Depends on sideloaded apps appearing in Google's list. [V]
@@ -121,8 +125,8 @@ Five things in the plan are promised more firmly than the platform supports. Non
 
 The owner asked Claude to decide these on 2026-11-25. All three are settings, so they can be changed later.
 
-1. **Voice fallback.** Templar tries its own recognizer first. If the remote mic does not feed it, Templar uses Google's speech pop-up and shows the results in Templar. Typing always works. The owner picked this option.
-2. **Star button.** A Templar setting, as in section 4a. Default action: the Templar quick menu, with Google Home one tile away.
+1. ~~**Voice fallback.**~~ Dropped 2026-11-25. Templar tries its own recognizer first. If the remote mic does not feed it, Templar uses Google's speech pop-up and shows the results in Templar. Typing always works. The owner picked this option.
+2. ~~**Star button.**~~ Dropped 2026-11-25. Was: a Templar setting, as in section 4a. Default action: the Templar quick menu, with Google Home one tile away.
 3. **Global shortcuts in other apps.** Off by default. Turned on only after the hold-volume test passes on the physical remote. Shortcuts inside Templar ship regardless. Decided by Claude.
 
 ## 6. Sources read on 2026-11-25
@@ -163,7 +167,7 @@ Device facts from the B1 live test (PR #6 comments): with Templar holding the HO
 
 Consuming Home hides it from the framework, so Templar would have to detect the long press itself and reopen the dashboard through a launcherx action that may be protected. That puts the owner's hard constraint at risk, and it needs the key filter that may break volume repeat. Keep it only as a backup if the window approach fails.
 
-### Star button
+### Star button (dropped 2026-11-25)
 
 To stop Google's smart-home screen opening as well, the service must return true for `MACRO_1` down and up. That needs the key filter flag, so it depends on the volume test. When the owner's star setting is "Google's own action", Templar passes the key through.
 
@@ -194,7 +198,7 @@ The owner said these features can be dropped unless another way is found, and th
 | Feature | Status |
 | --- | --- |
 | Home lands on Templar | **Pending the window-watch spike (section 7).** Dropped if the spike fails. Templar then stays a normally launched app. |
-| Star button opens Templar's menu | **Pending the same spike.** Dropped if it fails. No-code fallback: assign Templar to the star in Google's own button picker. |
+| Star button opens Templar's menu | **Dropped 2026-11-25** (MACRO_1 is a launcherx global key; code removed). Was: pending the same spike. Dropped if it fails. No-code fallback: assign Templar to the star in Google's own button picker. |
 | Templar's own voice recognizer | **Dropped.** Use Google's voice search as it is. Typing in Templar search stays. The S1 voice spike and the voice fallback setting are cancelled. |
 
 Limits of testing without the owner pressing buttons:

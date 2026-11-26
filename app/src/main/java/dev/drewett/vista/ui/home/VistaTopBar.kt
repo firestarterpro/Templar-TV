@@ -77,6 +77,7 @@ fun VistaTopBar(
     onOpenQuickSettings: () -> Unit,
     onOpenSearch: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenGoogleHome: (() -> Unit)? = null,
     barFocusRequester: FocusRequester? = null,
     contentFocus: FocusRequester? = null,
 ) {
@@ -111,6 +112,11 @@ fun VistaTopBar(
             Box(Modifier.size(16.dp))
             IconButton(R.drawable.ic_search, "Search", onClick = onOpenSearch)
             Box(Modifier.size(12.dp))
+            // Google Home is never more than a few presses away, in every home view.
+            if (onOpenGoogleHome != null) {
+                IconButton(R.drawable.ic_google_home, "Google Home", onClick = onOpenGoogleHome)
+                Box(Modifier.size(12.dp))
+            }
             IconButton(R.drawable.ic_settings, "Quick settings", onClick = onOpenQuickSettings)
         }
     }

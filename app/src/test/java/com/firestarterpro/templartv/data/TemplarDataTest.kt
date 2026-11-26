@@ -168,11 +168,11 @@ class TemplarDataTest {
     }
 
     @Test fun settingsFallBackToDefaults() = runBlocking {
-        assertEquals("rows", data.profiles.setting(p, "home_view"))
-        data.profiles.putSetting(p, "home_view", "columns")
         assertEquals("columns", data.profiles.setting(p, "home_view"))
-        data.profiles.resetSetting(p, "home_view")
+        data.profiles.putSetting(p, "home_view", "rows")
         assertEquals("rows", data.profiles.setting(p, "home_view"))
+        data.profiles.resetSetting(p, "home_view")
+        assertEquals("columns", data.profiles.setting(p, "home_view"))
     }
 
     // Shortcuts

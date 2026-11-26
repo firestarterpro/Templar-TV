@@ -37,7 +37,12 @@ data class PlaybackObservation(
     val detail: String = "",
     val artworkRef: String = "",
     val deepLink: String = "",
+    /** Weaker supporting signals for the same viewing (for example "opened from Templar"). Stored as evidence. */
+    val corroboration: List<Corroboration> = emptyList(),
 )
+
+/** A supporting signal that rides along with an observation. [detail] must be stable so repeats are not stored twice. */
+data class Corroboration(val source: EvidenceSource, val confidence: Float, val detail: String)
 
 /**
  * Local watch history with evidence and confidence.
@@ -75,6 +80,11 @@ class WatchHistoryRepository(
             if (dao.countEvidence(id, obs.source.name, obs.detail) == 0) {
                 dao.insertEvidence(WatchEvidenceEntity(watchId = id, source = obs.source.name, confidence = signal, detail = obs.detail, observedAt = obs.observedAt))
             }
+            for (c in obs.corroboration) {
+                if (dao.countEvidence(id, c.source.name, c.detail) == 0) {
+                    dao.insertEvidence(WatchEvidenceEntity(watchId = id, source = c.source.name, confidence = c.confidence.coerceIn(0f, 1f), detail = c.detail, observedAt = obs.observedAt))
+                }
+            }
             applyConfidence(id, obs.observedAt)
             id
         }
@@ -92,7 +102,7 @@ class WatchHistoryRepository(
             dao.update(entry.copy(manualCorrection = true, updatedTimestamp = now))
             applyConfidence(watchId, now)
             true
-        }
+        }.also { if (it) putConfirmedOnShelf(watchId) }
     }
 
     /** The user fixes the title or ids of a session. Also confirms it. */
@@ -104,6 +114,8 @@ class WatchHistoryRepository(
             dao.update(
                 entry.copy(
                     canonicalTitle = title.trim(),
+                    // The corrected name is the show's name, so the series follows it.
+                    seriesTitle = if (entry.seriesTitle.isNotBlank()) title.trim() else entry.seriesTitle,
                     tmdbId = if (tmdbId > 0) tmdbId else entry.tmdbId,
                     imdbId = imdbId.ifBlank { entry.imdbId },
                     manualCorrection = true, updatedTimestamp = now,
@@ -112,7 +124,7 @@ class WatchHistoryRepository(
             dao.insertEvidence(WatchEvidenceEntity(watchId = watchId, source = EvidenceSource.MANUAL.name, confidence = 1f, detail = "corrected by user", observedAt = now))
             applyConfidence(watchId, now)
             true
-        }
+        }.also { if (it) putConfirmedOnShelf(watchId) }
     }
 
     /** The user says "not a real viewing". Kept (never deleted) but out of the queue and of history. */
@@ -157,34 +169,56 @@ class WatchHistoryRepository(
         dao.setMatch(watchId, state, confidence, strongest, at)
     }
 
-    private suspend fun putOnShelf(watchId: Long, obs: PlaybackObservation) {
-        val repo = shelves ?: return
+    /**
+     * The user confirmed or corrected a session from the review queue. It now counts as history, so
+     * it reaches the provider shelf even though no new observation arrives. The user chose it, so
+     * a tile they had removed comes back (MANUAL), as with any manual add.
+     */
+    private suspend fun putConfirmedOnShelf(watchId: Long) {
         val entry = dao.get(watchId) ?: return
-        if (entry.reviewState != ReviewState.CONFIRMED) return
+        // The position came from the app or Jellyfin if either ever reported it, whatever else confirmed the title.
+        val seen = dao.evidenceFor(watchId).map { it.source }.toSet()
+        val reporter = listOf(EvidenceSource.JELLYFIN_EVENT, EvidenceSource.MEDIA_SESSION).firstOrNull { it.name in seen }
+        putEntryOnShelf(entry, ShelfSource.MANUAL, deepLink = "", artworkOverride = "", kindSource = reporter)
+    }
+
+    private suspend fun putOnShelf(watchId: Long, obs: PlaybackObservation) {
+        val entry = dao.get(watchId) ?: return
         val source = when (obs.source) {
             EvidenceSource.TEMPLAR_LAUNCH -> ShelfSource.TEMPLAR_LAUNCH
             EvidenceSource.PROVIDER_ROW -> ShelfSource.PROVIDER_ROW
             EvidenceSource.MANUAL -> ShelfSource.MANUAL
             else -> ShelfSource.MEDIA_SESSION
         }
+        putEntryOnShelf(entry, source, obs.deepLink, obs.artworkRef, obs.source)
+    }
+
+    private suspend fun putEntryOnShelf(
+        entry: WatchHistoryEntry, source: ShelfSource, deepLink: String, artworkOverride: String, kindSource: EvidenceSource?,
+    ) {
+        val repo = shelves ?: return
+        if (entry.reviewState != ReviewState.CONFIRMED || entry.removedAt != null) return
+        val watchId = entry.id.toLong()
         repo.record(
-            obs.profileId, obs.provider, source,
+            entry.profileId, entry.provider, source,
             ShelfDraft(
                 title = entry.canonicalTitle, seriesTitle = entry.seriesTitle, contentType = entry.contentType,
                 seasonNumber = entry.seasonNumber, episodeNumber = entry.episodeNumber, episodeTitle = entry.episodeTitle,
-                providerContentId = entry.providerContentId, deepLink = obs.deepLink, packageName = entry.packageName,
-                tmdbId = entry.tmdbId, imdbId = entry.imdbId, artworkRef = entry.artwork(obs),
+                providerContentId = entry.providerContentId, deepLink = deepLink, packageName = entry.packageName,
+                tmdbId = entry.tmdbId, imdbId = entry.imdbId, artworkRef = artworkOverride.ifBlank { entry.artworkReference },
                 progressMs = entry.playbackPosition, runtimeMs = entry.mediaRuntime,
-                progressKind = progressKind(obs), watched = entry.watchedStatus, watchHistoryId = watchId,
+                progressKind = progressKind(entry.playbackPosition, kindSource ?: strongestSource(entry)), watched = entry.watchedStatus, watchHistoryId = watchId,
             ),
         )
     }
 
-    private fun WatchHistoryEntry.artwork(obs: PlaybackObservation) = obs.artworkRef.ifBlank { artworkReference }
+    private fun strongestSource(entry: WatchHistoryEntry): EvidenceSource? =
+        EvidenceSource.entries.firstOrNull { it.name == entry.evidenceSource }
 
-    private fun progressKind(obs: PlaybackObservation) = when {
-        obs.positionMs <= 0 -> ProgressKind.UNKNOWN
-        obs.source == EvidenceSource.JELLYFIN_EVENT || obs.source == EvidenceSource.MEDIA_SESSION -> ProgressKind.EXACT
+    /** A position is exact only when an app (MediaSession) or Jellyfin reported it; otherwise it is Templar's estimate. */
+    private fun progressKind(positionMs: Long, source: EvidenceSource?) = when {
+        positionMs <= 0 -> ProgressKind.UNKNOWN
+        source == EvidenceSource.JELLYFIN_EVENT || source == EvidenceSource.MEDIA_SESSION -> ProgressKind.EXACT
         else -> ProgressKind.ESTIMATED
     }
 

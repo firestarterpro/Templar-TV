@@ -1,10 +1,12 @@
 package com.firestarterpro.templartv.service
 
 import android.app.Notification
+import android.content.ComponentName
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.firestarterpro.templartv.data.notifications.NotificationRepository
 import com.firestarterpro.templartv.domain.NotificationItem
+import com.firestarterpro.templartv.observation.MediaSessionObserver
 
 /**
  * Captures live system notifications for the quick-settings panel. Enabled via adb
@@ -15,7 +17,15 @@ class VistaNotificationListenerService : NotificationListenerService() {
     private val overlay by lazy { NotificationOverlay(this) }
     private var lastOverlayKey: String? = null
 
-    override fun onListenerConnected() = refresh()
+    override fun onListenerConnected() {
+        refresh()
+        // Being a notification listener is what lets Android show us other apps' media sessions.
+        runCatching { MediaSessionObserver.get(this).start(ComponentName(this, VistaNotificationListenerService::class.java)) }
+    }
+
+    override fun onListenerDisconnected() {
+        runCatching { MediaSessionObserver.get(this).stop() }
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         refresh()

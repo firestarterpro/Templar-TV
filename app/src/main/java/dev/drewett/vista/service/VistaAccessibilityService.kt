@@ -16,23 +16,23 @@ import android.view.accessibility.AccessibilityEvent
 import com.firestarterpro.templartv.FeatureFlags
 import com.firestarterpro.templartv.Flag
 import com.firestarterpro.templartv.MainActivity
-import com.firestarterpro.templartv.QuickSettingsActivity
-import com.firestarterpro.templartv.StarAction
+import com.firestarterpro.templartv.quickmenu.QuickMenuController
 
 /**
  * Optional helpers that need the accessibility service. Every feature here is behind a runtime
  * flag, OFF by default, and the service never logs key presses.
  *
  * - [Flag.SETTINGS_KEY_CAPTURE]: the remote's Settings key opens Templar's quick menu.
- * - [Flag.STAR_KEY_CAPTURE]: the star button (KEYCODE_MACRO_1) is claimed so Google's smart-home
- *   screen doesn't also open, and the action chosen in Features → Star button action runs.
  * - [Flag.HOME_RETURN]: on Google TV Streamer a short Home press still opens Google's launcher even
  *   when Templar holds the HOME role. This watches window changes (no key events needed) and brings
  *   Templar back on top. It never consumes the Home key. Long-press Home (Google's dashboard with
  *   the Google Home panel) is never touched: only Google's HomeActivity triggers a bounce, and the
  *   bounce is cancelled if the dashboard window or a Home long-press shows up.
  *
- * The service only asks Android for key events while a key flag is on. It is enabled via adb (it
+ * The star button (KEYCODE_MACRO_1) is not handled: on Google TV Streamer it is a global key owned
+ * by launcherx and never reaches an accessibility service (star capture removed 2026-11-25).
+ *
+ * The service only asks Android for key events while [Flag.SETTINGS_KEY_CAPTURE] is on. It is enabled via adb (it
  * can't be requested at runtime on TV).
  */
 class VistaAccessibilityService : AccessibilityService() {
@@ -63,14 +63,10 @@ class VistaAccessibilityService : AccessibilityService() {
         super.onDestroy()
     }
 
-    private fun starCaptureWanted(): Boolean =
-        FeatureFlags.isEnabled(this, Flag.STAR_KEY_CAPTURE) &&
-            FeatureFlags.starAction(this) != StarAction.GOOGLE_DEFAULT
-
-    /** Only ask the system for key events while a key flag is on. */
+    /** Only ask the system for key events while Settings key capture is on. */
     private fun applyKeyFilter() {
         val info = serviceInfo ?: return
-        val wanted = FeatureFlags.isEnabled(this, Flag.SETTINGS_KEY_CAPTURE) || starCaptureWanted()
+        val wanted = FeatureFlags.isEnabled(this, Flag.SETTINGS_KEY_CAPTURE)
         val has = info.flags and AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS != 0
         if (wanted == has) return
         info.flags = if (wanted) {
@@ -193,41 +189,16 @@ class VistaAccessibilityService : AccessibilityService() {
                 if (event.action == KeyEvent.ACTION_DOWN) openQuickMenu()
                 return true // consume both down and up so the system dashboard doesn't also open
             }
-            STAR_KEYCODE -> {
-                if (!starCaptureWanted()) return false
-                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) runStarAction()
-                return true // consume both down and up so Google's smart-home screen doesn't also open
-            }
         }
         return false
     }
 
-    private fun runStarAction() {
-        when (FeatureFlags.starAction(this)) {
-            StarAction.QUICK_MENU -> openQuickMenu()
-            StarAction.TEMPLAR_HOME -> runCatching {
-                startActivity(
-                    Intent(this, MainActivity::class.java)
-                        .setAction(Intent.ACTION_MAIN)
-                        .addCategory(Intent.CATEGORY_HOME)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED),
-                )
-            }
-            StarAction.GOOGLE_DEFAULT -> Unit
-        }
-    }
-
     private fun openQuickMenu() {
-        runCatching {
-            startActivity(
-                Intent(this, QuickSettingsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
-        }
+        QuickMenuController.openOrLegacy(this)
     }
 
     private companion object {
         const val TAG = "TemplarHomeGuard"
-        const val STAR_KEYCODE = KeyEvent.KEYCODE_MACRO_1 // 313: the remote's star button
         const val LONG_PRESS_MEMORY_MS = 2_000L
     }
 }

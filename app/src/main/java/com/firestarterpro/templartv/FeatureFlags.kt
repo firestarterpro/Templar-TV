@@ -27,11 +27,25 @@ enum class Flag(
     PROVIDER_ROWS("provider_rows", true, "Provider rows", "Show rows for your streaming providers."),
     PREVIEW_AND_UPCOMING("preview_and_upcoming", true, "New and upcoming", "Show new, upcoming and leaving-soon sections."),
     GOOGLE_HOME_HANDOFF("google_home_handoff", true, "Google Home shortcut", "Keep a way to open Google Home from Templar TV."),
+    DEBUG_METADATA_VALUES(
+        "debug_metadata_values", false, "Log playing metadata (debug)",
+        "While on, writes every field name AND value a streaming app publishes to the local log (adb logcat -s TemplarObserver), so the shelf parser can be tuned. Those values are what you are watching: turn it off afterwards.",
+        experimental = true,
+    ),
     DIAGNOSTICS("diagnostics", true, "Diagnostics", "Keep local diagnostics about Templar TV itself."),
     PROVIDER_RECENT_SHELVES("provider_recent_shelves", true, "Recently played shelves", "Keep a recently played shelf for each provider."),
     SHELF_EDITING("shelf_editing", true, "Edit shelves", "Add, move, pin, hide and remove shelf tiles."),
     FAVOURITE_SHOWS("favourite_shows", true, "Favourite shows", "Keep an ordered list of favourite shows."),
     ROW_MANAGER("row_manager", true, "Row manager", "Reorder, hide and rename home rows."),
+    BIG_BOX_HOME(
+        "big_box_home", true, "Big-box home",
+        "Use the new home (shelves, favourites, edit and move modes). Off brings back the classic For you screen.",
+    ),
+    HOME_VIEW_COLUMNS("home_view_columns", true, "Home view: Columns (Beta)", "Each shelf as a column of posters, side by side."),
+    HOME_VIEW_RAIL_GRID("home_view_rail_grid", true, "Home view: Rail + grid (Beta)", "Shelf names on the left, the chosen shelf as a poster grid."),
+    HOME_VIEW_SPOTLIGHT("home_view_spotlight", true, "Home view: Spotlight (Beta)", "Full-screen artwork for the focused show with one strip below."),
+    HOME_VIEW_WALL("home_view_wall", true, "Home view: Wall (Beta)", "One big poster grid with filter chips across the top."),
+    HOME_VIEW_LIST("home_view_list", true, "Home view: List (Beta)", "Text-first list of everything, grouped by shelf."),
     KEYBOARD_SHORTCUTS("keyboard_shortcuts", true, "Keyboard shortcuts", "Use your own key shortcuts inside Templar TV."),
     GLOBAL_SHORTCUTS(
         "global_shortcuts", false, "Shortcuts over other apps",
@@ -51,7 +65,6 @@ enum class Flag(
     JELLYFIN("jellyfin", false, "Jellyfin", "Show personal media from your Jellyfin server.", experimental = true),
     OCR_OBSERVATION("ocr_observation", false, "Screen reading (OCR)", "Opt-in screen text matching for watch history.", experimental = true),
     FOCUSED_TILE_OBSERVATION("focused_tile_observation", false, "Focused tile observation", "Use the focused tile as watch evidence.", experimental = true),
-    CUSTOM_VOICE_ROUTING("custom_voice_routing", false, "Templar voice search", "Route media voice commands through Templar.", experimental = true),
     LOW_CONFIDENCE_REVIEW("low_confidence_review", false, "Review queue", "Send uncertain matches to a review row.", experimental = true),
     SETTINGS_KEY_CAPTURE(
         "settings_key_capture", false, "Capture Settings key",
@@ -63,18 +76,11 @@ enum class Flag(
         "On Google TV Streamer the Home key can still open Google's launcher. When on, Templar brings itself back on top after a short Home press. Long-press Home (the Google Home dashboard) is left alone. Needs the accessibility service on and Templar set as Home app.",
         experimental = true,
     ),
-    STAR_KEY_CAPTURE(
-        "star_key_capture", false, "Capture star button (not working on Streamer)",
-        "Tested on Google TV Streamer: Google treats the star button as a global key, so an accessibility service never receives it and this has no effect there. Kept for other devices.",
+    QUICK_MENU(
+        "quick_menu", false, "Quick menu",
+        "One left-side menu over any screen: Resume, Continue watching, Favourite shows, your apps, Change view, Rows, quick settings and Templar shortcuts, with Google Home, Google TV Home and Templar Home always at the bottom. Replaces the quick-settings panel while on. Menu or Settings key inside Templar.",
         experimental = true,
     ),
-}
-
-/** What the remote's star button does while [Flag.STAR_KEY_CAPTURE] is on. */
-enum class StarAction(val key: String, val label: String) {
-    QUICK_MENU("quick_menu", "Templar quick menu"),
-    TEMPLAR_HOME("templar_home", "Templar home screen"),
-    GOOGLE_DEFAULT("google_default", "Leave it to Google"),
 }
 
 object FeatureFlags {
@@ -89,15 +95,6 @@ object FeatureFlags {
 
     fun set(context: Context, flag: Flag, enabled: Boolean) {
         prefs(context).edit().putBoolean(flag.key, enabled).apply()
-    }
-
-    fun starAction(context: Context): StarAction {
-        val stored = runCatching { prefs(context).getString("star_action", null) }.getOrNull()
-        return StarAction.entries.firstOrNull { it.key == stored } ?: StarAction.QUICK_MENU
-    }
-
-    fun setStarAction(context: Context, action: StarAction) {
-        prefs(context).edit().putString("star_action", action.key).apply()
     }
 
     /** Back to the built-in default (removes the stored override). */
