@@ -26,7 +26,7 @@ No root, no system package removal, nothing disabled. Every option below is undo
 
 ### 1. Jellyfin + Tailscale + pinned apps (best single step)
 - Jellyfin's Android TV app installs from Play Store on any Google TV and handles Music and Movies natively. [doc: jellyfin.org androidtv posts]
-- Tailscale is useful, with one caveat: **family members need to be on your tailnet** (invites, or "share node" for a single device) for this to work off your home network. For non-technical family it is simpler to expose Jellyfin over HTTPS with a reverse proxy (Cloudflare Tunnel or Tailscale Funnel) and give them one URL plus a login. Tailscale on the Streamer itself is only needed if the Dell's address is not reachable on the home LAN, which it is. [guess]
+- Family sharing route is owned by the "Share music and videos with family" thread: **Tailscale node sharing, no public exposure**. This doc does not recommend a different route. Public options (Tailscale Funnel, Cloudflare Tunnel) are only an alternative if family cannot install Tailscale, and they expose the server publicly.
 - On the stock home: Google TV lets you reorder the "Your apps" row and pick favourite apps (long-press an app, then Move). [doc: support.google.com/chromecast/answer/12390692] Put Jellyfin first. That is the closest to "My Movies / Music" you can get without a custom launcher.
 - Create separate Jellyfin libraries named exactly "My Movies" and "Music" so the names match your Templar tabs everywhere.
 - Rollback: unpin or uninstall the app. Nothing system-level changes.
@@ -52,14 +52,14 @@ A tiny launcher-visible activity ("Templar Music", "Templar Movies") that deep-l
 
 ## Family sharing (affects the end goal)
 - Phones and TVs: Jellyfin apps exist for Android TV/Google TV, Android, iOS, and web. One account per person keeps each watch history separate.
-- Security matters more than any launcher choice once other people connect: HTTPS, strong passwords, no open admin account, no direct port-forward of raw Jellyfin. Tailscale invites or Funnel are the safe routes.
+- Security matters more than any launcher choice once other people connect: strong passwords, no shared admin account, no port-forward of raw Jellyfin. Tailscale node sharing is the chosen route.
 - Music rights are yours to judge; sharing with family is within normal personal use, public hosting is not the goal.
 
 ## What I think the end goal is
 Anyone in your family opens one app on any TV or phone and plays your music and movies, and on your own TV Templar TV gives the custom sections. The stock launcher only needs Jellyfin pinned first plus, if possible, a Continue Watching row.
 
 ## Recommended order (no TV test loops)
-1. Decide the sharing route: Tailscale invites for a few people, or Tailscale Funnel/Cloudflare for easy family access. (I recommend Funnel or a tunnel for non-technical family.)
+1. Sharing route: Tailscale node sharing (decided in the family-sharing thread).
 2. Install Jellyfin on the Streamer and pin it first in the Apps row (hands-on, about 2 minutes).
 3. Check Jellyfin's Android TV settings for the Watch Next/Continue Watching option and turn it on.
 4. Keep Templar TV as HOME on your Streamer only.
