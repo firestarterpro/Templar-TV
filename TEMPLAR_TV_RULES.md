@@ -1,5 +1,10 @@
 # Templar TV Rules
 
+Shared stack: follow [firestarterpro/stacks-attacks `AGENTS.md`](https://github.com/firestarterpro/stacks-attacks/blob/main/AGENTS.md) (local clone `C:\Templar Archives\Cybernetics Core\stacks-attacks\AGENTS.md`). The project registry is STACKS.md → Projects. This file adds only what is specific to Templar TV.
+Status: `docs/handoffs/templar-tv-status.md`
+
+Follow the current build instructions and keep every device change reversible. If this project moves, is renamed or changes its status file, update its row in stacks-attacks STACKS.md → Projects and run `python tools\project-sync-check.py` there.
+
 ## Goal
 Build a reversible, daily-use Google TV launcher named Templar TV while retaining the stock Google launcher and Google's Gemini voice experience.
 
