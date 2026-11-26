@@ -23,8 +23,9 @@ Targets API 34 and runs on a 1 GB-RAM Google TV stick.
 
 ## Features
 
-- Tabbed navigation — For you, Movies, Shows, Apps, Library — with a segmented selector and
-  integrated search.
+- Tabbed navigation — Templar TV, My Movies, My Shows, My Music — with a segmented selector and
+  integrated search. The last three list the personal Jellyfin library and play it inside the app
+  (the Jellyfin key is stored only on the TV).
 - An immersive hero that follows focus, showing artwork, synopsis, season/episode, and remaining
   runtime.
 - Continue Watching and per-provider content rows sourced from `TvContractCompat`, each launched
