@@ -47,7 +47,7 @@ data class HomeTile(
 ) {
     /** Templar owns the order of favourites and of shelf tiles it did not take from a provider row. */
     val movable: Boolean
-        get() = kind == TileKind.FAVOURITE || (kind == TileKind.SHELF && source != ShelfSource.PROVIDER_ROW)
+        get() = kind == TileKind.FAVOURITE || kind == TileKind.APP || (kind == TileKind.SHELF && source != ShelfSource.PROVIDER_ROW)
 
     val isRealContent: Boolean get() = kind != TileKind.ADD && kind != TileKind.MORE
 }

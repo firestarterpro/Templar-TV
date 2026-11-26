@@ -47,6 +47,8 @@ data class ExternalInput(
     val allCards: List<ContentCard> = emptyList(),
     val apps: List<AppEntry> = emptyList(),
     val favouriteApps: Set<String> = emptySet(),
+    /** Bumped when the owner reorders or hides apps, so the home rows rebuild. */
+    val appLayoutVersion: Int = 0,
 )
 
 /** Everything the home views need to draw and to decide what the owner may do. */
@@ -109,7 +111,23 @@ class BigBoxViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun setExternal(input: ExternalInput) {
-        external.value = input
+        external.value = input.copy(appLayoutVersion = external.value.appLayoutVersion)
+    }
+
+    private val appLayout by lazy { AppLayoutStore(getApplication()) }
+    private fun bumpAppLayout() { external.value = external.value.copy(appLayoutVersion = external.value.appLayoutVersion + 1) }
+
+    /** Number of apps the owner has hidden from the Apps row (for Row Manager). */
+    fun hiddenAppCount(): Int = appLayout.hidden.size
+
+    fun hideApp(packageName: String) { appLayout.hide(packageName); bumpAppLayout() }
+    fun showHiddenApps() { appLayout.showAll(); bumpAppLayout() }
+
+    private fun moveApp(packageName: String, toIndex: Int) {
+        val ext = external.value
+        val current = AppLayoutStore.arrange(ext.apps, ext.favouriteApps, appLayout.order, appLayout.hidden).map { it.packageName }
+        appLayout.setOrder(com.firestarterpro.templartv.data.Ordering.moveTo(current, packageName, toIndex))
+        bumpAppLayout()
     }
 
     private val snapshot: Flow<DbSnapshot> = profileId.flatMapLatest { pid ->
@@ -211,8 +229,7 @@ class BigBoxViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun appTiles(ext: ExternalInput): List<HomeTile> {
-        val (fav, rest) = ext.apps.partition { it.packageName in ext.favouriteApps }
-        return (fav + rest).map {
+        return AppLayoutStore.arrange(ext.apps, ext.favouriteApps, appLayout.order, appLayout.hidden).map {
             HomeTile(key = "app:${it.packageName}", kind = TileKind.APP, title = it.label, packageName = it.packageName)
         }
     }
@@ -359,6 +376,14 @@ class BigBoxViewModel(application: Application) : AndroidViewModel(application) 
         val tile = row?.tiles?.firstOrNull { it.key == s.tileKey }
         if (row == null || tile == null || s.currentIndex == s.originalIndex) {
             moveSession.value = null
+            return
+        }
+        if (tile.kind == TileKind.APP) {
+            viewModelScope.launch(Dispatchers.IO) {
+                moveApp(tile.packageName, s.currentIndex)
+                kotlinx.coroutines.delay(150)
+                moveSession.value = null
+            }
             return
         }
         val before = snapshotCount.value

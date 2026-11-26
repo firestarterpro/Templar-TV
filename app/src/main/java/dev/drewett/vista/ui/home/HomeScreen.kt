@@ -54,6 +54,10 @@ fun HomeScreen(
     var tab by remember { mutableStateOf(VistaTab.FOR_YOU) }
     var searchOpen by remember { mutableStateOf(false) }
     var menuApp by remember { mutableStateOf<com.firestarterpro.templartv.domain.AppEntry?>(null) }
+    var moveAppRequest by remember { mutableStateOf<String?>(null) }
+    val bigBoxVm: com.firestarterpro.templartv.home.BigBoxViewModel = viewModel()
+    val onMoveApp: (com.firestarterpro.templartv.domain.AppEntry) -> Unit = { app -> moveAppRequest = app.packageName }
+    val onHideApp: (com.firestarterpro.templartv.domain.AppEntry) -> Unit = { app -> bigBoxVm.hideApp(app.packageName) }
     val topBarFocus = remember { FocusRequester() }
     val contentFocus = remember { FocusRequester() }
     val resetSignal by VistaSignals.reset.collectAsStateWithLifecycle()
@@ -78,6 +82,8 @@ fun HomeScreen(
                     onLaunchApp = viewModel::launch,
                     onLaunchCard = viewModel::launchContent,
                     onAppLongPress = { menuApp = it },
+                    moveAppRequest = moveAppRequest,
+                    onMoveAppHandled = { moveAppRequest = null },
                     onOpenSearch = { searchOpen = true },
                     onFailed = { bigBoxFailed = true },
                     topBarFocus = topBarFocus,
@@ -128,6 +134,8 @@ fun HomeScreen(
             onToggleFavourite = viewModel::toggleFavourite,
             onAppInfo = viewModel::openAppInfo,
             onUninstall = viewModel::uninstall,
+            onMove = if (bigBox && tab == VistaTab.FOR_YOU) onMoveApp else null,
+            onHide = if (bigBox && tab == VistaTab.FOR_YOU) onHideApp else null,
         )
     }
 }

@@ -255,6 +255,8 @@ fun RowManagerPanel(
     onMove: (ManagedRow) -> Unit,
     onChangeView: () -> Unit,
     onRestoreFavourites: () -> Unit,
+    hiddenAppCount: Int,
+    onShowHiddenApps: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val first = remember { FocusRequester() }
@@ -300,6 +302,7 @@ fun RowManagerPanel(
                 }
             }
             PanelButton("Restore removed favourites…") { onRestoreFavourites() }
+            if (hiddenAppCount > 0) PanelButton("Show $hiddenAppCount hidden apps") { onShowHiddenApps() }
         }
     }
 }
