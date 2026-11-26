@@ -41,6 +41,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Vista">
 
         <activity
@@ -76,6 +77,12 @@
         </activity>
 
         <!-- Settings -> Features: runtime feature flags -->
+        <activity
+            android:name="com.firestarterpro.templartv.jellyfin.JellyfinPlayerActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation"
+            android:theme="@style/Theme.Vista" />
+
         <activity
             android:name=".FeaturesActivity"
             android:exported="false"

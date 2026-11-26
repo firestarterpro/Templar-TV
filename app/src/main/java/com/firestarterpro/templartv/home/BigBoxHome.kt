@@ -68,6 +68,8 @@ fun BigBoxHome(
     onLaunchApp: (AppEntry) -> Unit,
     onLaunchCard: (ContentCard) -> Unit,
     onAppLongPress: (AppEntry) -> Unit,
+    moveAppRequest: String? = null,
+    onMoveAppHandled: () -> Unit = {},
     onOpenSearch: () -> Unit,
     onFailed: () -> Unit,
     topBarFocus: FocusRequester,
@@ -120,6 +122,19 @@ fun BigBoxHome(
             TileKind.ADD -> { restoreKey = tile.key; overlay = Overlay.AddShow(row.rowId) }
             TileKind.MORE -> { restoreKey = tile.key; overlay = Overlay.SeeAll(row.rowId) }
         }
+    }
+
+    // "Move" chosen in the app menu: lift that app's tile and let the D-pad place it.
+    LaunchedEffect(moveAppRequest, ui.ready, rows) {
+        val pkg = moveAppRequest ?: return@LaunchedEffect
+        if (!ui.ready || rows.isEmpty()) return@LaunchedEffect
+        val row = rows.firstOrNull { it.kind == RowKind.APPS }
+        val tile = row?.tiles?.firstOrNull { it.kind == TileKind.APP && it.packageName == pkg }
+        if (row != null && tile != null) {
+            vm.startMove(row, tile)
+            focus.request(tile.key)
+        }
+        onMoveAppHandled()
     }
 
     fun longPress(row: HomeRowModel, tile: HomeTile) {
@@ -429,6 +444,8 @@ private fun Overlays(
             onMove = { m -> onSetOverlay(Overlay.RowMove(m.rowId)) },
             onChangeView = { onSetOverlay(Overlay.ViewPicker) },
             onRestoreFavourites = { onSetOverlay(Overlay.Removed(DefaultRows.FAVOURITE_SHOWS)) },
+            hiddenAppCount = vm.hiddenAppCount(),
+            onShowHiddenApps = { vm.showHiddenApps(); onClose(restoreKey) },
             onDismiss = { onClose(restoreKey) },
         )
 

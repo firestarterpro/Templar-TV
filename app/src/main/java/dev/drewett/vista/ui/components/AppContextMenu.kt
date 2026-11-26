@@ -52,6 +52,8 @@ fun AppContextMenu(
     onToggleFavourite: (AppEntry) -> Unit,
     onAppInfo: (String) -> Unit,
     onUninstall: (String) -> Unit,
+    onMove: ((AppEntry) -> Unit)? = null,
+    onHide: ((AppEntry) -> Unit)? = null,
 ) {
     app ?: return
     BackHandler { onDismiss() }
@@ -104,6 +106,8 @@ fun AppContextMenu(
             }
             Box(Modifier.size(0.dp, 8.dp))
             MenuItem("Open", Modifier.focusRequester(firstItem)) { onOpen(app); onDismiss() }
+            if (onMove != null) MenuItem("Move") { onMove(app); onDismiss() }
+            if (onHide != null) MenuItem("Hide") { onHide(app); onDismiss() }
             MenuItem(if (isFavourite) "Remove from favourites" else "Add to favourites") {
                 onToggleFavourite(app); onDismiss()
             }
