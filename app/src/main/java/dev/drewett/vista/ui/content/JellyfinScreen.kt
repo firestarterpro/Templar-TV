@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,7 +43,9 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
+import com.firestarterpro.templartv.companion.CompanionController
 import com.firestarterpro.templartv.jellyfin.JellyfinClient
+import com.firestarterpro.templartv.jellyfin.JellyfinSetupServer
 import com.firestarterpro.templartv.jellyfin.JellyfinConfig
 import com.firestarterpro.templartv.jellyfin.JellyfinItem
 import com.firestarterpro.templartv.jellyfin.JellyfinKind
@@ -156,12 +159,33 @@ private fun PosterTile(item: JellyfinItem, ratio: Float, modifier: Modifier, onC
 private fun SetupForm(config: JellyfinConfig, contentFocus: FocusRequester, onDone: () -> Unit, onCancel: (() -> Unit)?) {
     var url by remember { mutableStateOf(config.serverUrl.ifEmpty { JellyfinConfig.DEFAULT_URL }) }
     var key by remember { mutableStateOf(config.apiKey) }
-    Column(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 16.dp).width(640.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    // Easier than the remote: a small web page on the LAN, open only while this form shows.
+    val server = remember {
+        JellyfinSetupServer(JellyfinConfig.DEFAULT_URL, onSave = { u, k ->
+            config.serverUrl = u
+            config.apiKey = k
+            android.os.Handler(android.os.Looper.getMainLooper()).post { onDone() }
+        })
+    }
+    DisposableEffect(server) {
+        server.start()
+        onDispose { server.stop() }
+    }
+    val ip = remember { CompanionController.lanAddresses().firstOrNull() }
+    Column(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 16.dp).width(960.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(
             "Connect to your Jellyfin server. The key is saved on this TV only.",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
         )
+        if (ip != null) {
+            Text(
+                "Easiest: on your phone or PC, open  http://$ip:${JellyfinSetupServer.PORT}  and enter code  ${server.code}",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text("Or type them here with the remote:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
+        }
         Field("Server address", url, { url = it }, Modifier.focusRequester(contentFocus))
         Field("API key (Jellyfin dashboard > API Keys)", key, { key = it })
         Button("Save and load") {

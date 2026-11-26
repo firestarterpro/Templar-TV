@@ -15,3 +15,6 @@ PR #15 and #17 merged to main (#11 to #14 closed as folded into #15).
 - Select opens the Jellyfin app. It first tries a `jellyfin://items/ID` link; if the app can't take it, it just opens Jellyfin and a toast names the title. The deep link is untested.
 - Manifest now allows cleartext HTTP (`usesCleartextTraffic`) because the LAN server is plain HTTP.
 - Not compiled/tested in the cloud. TV series are not listed yet (Movie and MusicAlbum only).
+
+## Jellyfin key from a phone or PC (same day)
+Typing a 32-character key with the remote was too painful. While the Jellyfin setup form is on screen, Templar now runs a tiny web page (`JellyfinSetupServer`, port 8781, LAN addresses only) and shows `http://<TV IP>:8781` plus a 6-digit code. Open it on any phone or PC, enter the code and key, and the TV saves it and loads the library. The page stops when the form closes, and after 5 wrong codes. The key is stored only in the TV's `templar_jellyfin` preferences.
