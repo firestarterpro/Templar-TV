@@ -20,6 +20,11 @@ class JellyfinConfig(context: Context) {
         get() = prefs.getString("key", "").orEmpty().trim()
         set(v) { prefs.edit().putString("key", v.trim()).apply() }
 
+    /** The Jellyfin user Templar browses as, once chosen. Empty until the first load. */
+    var userId: String
+        get() = prefs.getString("user", "").orEmpty()
+        set(v) { prefs.edit().putString("user", v).apply() }
+
     val isConfigured: Boolean get() = serverUrl.isNotEmpty() && apiKey.isNotEmpty()
 
     companion object {
@@ -38,43 +43,81 @@ data class JellyfinItem(
     val isFolder: Boolean = false,
 )
 
-enum class JellyfinKind(val itemType: String) { MOVIE("Movie"), SERIES("Series"), ALBUM("MusicAlbum") }
+/** [collectionType] is the Jellyfin library type that holds this kind of item. */
+enum class JellyfinKind(val itemType: String, val collectionType: String) {
+    MOVIE("Movie", "movies"), SERIES("Series", "tvshows"), ALBUM("MusicAlbum", "music"),
+}
+
+data class JellyfinUser(val id: String, val isAdmin: Boolean, val disabled: Boolean)
+data class JellyfinLibrary(val id: String, val name: String, val collectionType: String)
 
 /** Minimal read-only Jellyfin client: lists the libraries, browses into them, and gives stream URLs. */
 object JellyfinClient {
 
-    @Volatile private var cachedUser: Pair<String, String>? = null
-
-    private fun userId(base: String, key: String): String {
-        val tag = "$base|$key"
-        cachedUser?.let { if (it.first == tag) return it.second }
-        val users = JSONArray(get("$base/Users", key))
-        val id = (0 until users.length()).map { users.getJSONObject(it) }
-            .firstOrNull { it.optJSONObject("Policy")?.optBoolean("IsDisabled", false) != true }
-            ?.getString("Id") ?: error("No Jellyfin user found")
-        cachedUser = tag to id
-        return id
+    /**
+     * Which user to browse as: the saved one if it still exists and is enabled, else the first
+     * administrator, else the first enabled user.
+     */
+    fun pickUser(users: List<JellyfinUser>, saved: String): JellyfinUser? {
+        val enabled = users.filter { !it.disabled }
+        return enabled.firstOrNull { it.id == saved && saved.isNotEmpty() }
+            ?: enabled.firstOrNull { it.isAdmin }
+            ?: enabled.firstOrNull()
     }
 
-    /** Top level of a tab: every movie, every series or every album. */
-    suspend fun list(config: JellyfinConfig, kind: JellyfinKind): Result<List<JellyfinItem>> =
-        query(config, "IncludeItemTypes=${kind.itemType}&Recursive=true&SortBy=SortName")
+    /** Libraries for a tab. Preview libraries (name contains "preview") are left out so items aren't listed twice. */
+    fun pickLibraries(libraries: List<JellyfinLibrary>, kind: JellyfinKind): List<JellyfinLibrary> =
+        libraries.filter { it.collectionType.equals(kind.collectionType, ignoreCase = true) && !it.name.contains("preview", ignoreCase = true) }
 
-    /** What is inside a series (seasons), a season (episodes) or an album (tracks). */
-    suspend fun children(config: JellyfinConfig, parentId: String): Result<List<JellyfinItem>> =
-        query(config, "ParentId=$parentId&SortBy=ParentIndexNumber,IndexNumber,SortName")
+    /** Drops repeats of the same title (and artist or year), keeping the first. */
+    fun dedupe(items: List<JellyfinItem>): List<JellyfinItem> =
+        items.distinctBy { it.type + "|" + it.title.trim().lowercase() + "|" + it.subtitle.trim().lowercase() }
 
-    private suspend fun query(config: JellyfinConfig, q: String): Result<List<JellyfinItem>> = withContext(Dispatchers.IO) {
+    private fun userId(config: JellyfinConfig): String {
+        val base = config.serverUrl
+        val key = config.apiKey
+        val arr = JSONArray(get("$base/Users", key))
+        val users = (0 until arr.length()).map { arr.getJSONObject(it) }.map {
+            val policy = it.optJSONObject("Policy")
+            JellyfinUser(it.getString("Id"), policy?.optBoolean("IsAdministrator", false) == true, policy?.optBoolean("IsDisabled", false) == true)
+        }
+        val user = pickUser(users, config.userId) ?: error("No Jellyfin user found")
+        if (user.id != config.userId) config.userId = user.id
+        return user.id
+    }
+
+    /** Top level of a tab: every movie, every series or every album, from the real (non-preview) libraries. */
+    suspend fun list(config: JellyfinConfig, kind: JellyfinKind): Result<List<JellyfinItem>> = withContext(Dispatchers.IO) {
         runCatching {
             val base = config.serverUrl
             val key = config.apiKey
-            val uid = userId(base, key)
-            val items = JSONObject(get("$base/Users/$uid/Items?$q&Limit=2000&Fields=ProductionYear", key)).getJSONArray("Items")
-            (0 until items.length()).map { items.getJSONObject(it) }.map { o -> o.toItem(base) }
+            val uid = userId(config)
+            val views = JSONObject(get("$base/Users/$uid/Views", key)).getJSONArray("Items")
+            val libs = pickLibraries(
+                (0 until views.length()).map { views.getJSONObject(it) }.map {
+                    JellyfinLibrary(it.getString("Id"), it.optString("Name", ""), it.optString("CollectionType", ""))
+                },
+                kind,
+            )
+            val q = "IncludeItemTypes=${kind.itemType}&Recursive=true&SortBy=SortName"
+            val items = if (libs.isEmpty()) fetch(config, uid, q)
+            else libs.flatMap { fetch(config, uid, "$q&ParentId=${it.id}") }.sortedBy { it.title.lowercase() }
+            dedupe(items)
         }
     }
 
-    private fun JSONObject.toItem(base: String): JellyfinItem {
+    /** What is inside a series (seasons), a season (episodes) or an album (tracks). */
+    suspend fun children(config: JellyfinConfig, parentId: String): Result<List<JellyfinItem>> = withContext(Dispatchers.IO) {
+        runCatching { fetch(config, userId(config), "ParentId=$parentId&SortBy=ParentIndexNumber,IndexNumber,SortName") }
+    }
+
+    private fun fetch(config: JellyfinConfig, uid: String, q: String): List<JellyfinItem> {
+        val base = config.serverUrl
+        val items = JSONObject(get("$base/Users/$uid/Items?$q&Limit=2000&Fields=ProductionYear", config.apiKey)).getJSONArray("Items")
+        return (0 until items.length()).map { items.getJSONObject(it) }.map { o -> o.toItem(base) }
+    }
+
+    internal fun JSONObject.toItem(base: String): JellyfinItem {
         val id = getString("Id")
         val type = optString("Type", "")
         val index = optInt("IndexNumber", 0)
@@ -97,9 +140,11 @@ object JellyfinClient {
     }
 
     /** Direct stream of the original file. Needs [authHeader] on the request. */
-    fun streamUrl(config: JellyfinConfig, item: JellyfinItem): String =
-        if (item.type == "Audio") "${config.serverUrl}/Audio/${item.id}/stream?static=true"
-        else "${config.serverUrl}/Videos/${item.id}/stream?static=true"
+    fun streamUrl(config: JellyfinConfig, item: JellyfinItem): String = streamUrl(config.serverUrl, item)
+
+    fun streamUrl(base: String, item: JellyfinItem): String =
+        if (item.type == "Audio") "$base/Audio/${item.id}/stream?static=true"
+        else "$base/Videos/${item.id}/stream?static=true"
 
     /** Newer Jellyfin (10.11+) can refuse the legacy X-Emby-Token / api_key forms; this one always works. */
     fun authHeader(key: String): String =
