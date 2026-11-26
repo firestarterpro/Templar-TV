@@ -24,3 +24,12 @@ Typing a 32-character key with the remote was too painful. While the Jellyfin se
 - Browse in Templar: series → seasons → episodes, album → tracks (Jellyfin `ParentId` queries). Back goes up a level.
 - Play in Templar: `JellyfinPlayerActivity` (media3 ExoPlayer 1.4.1, new dependency). Direct stream of the original file with the key in the `Authorization: MediaBrowser` header (never in the URL). Episodes and tracks queue the rest of the season/album. No transcoding: a file the Streamer can't decode shows the player's error. Resume position and watch-state sync with Jellyfin are not built.
 - The Jellyfin app is no longer opened by Templar.
+
+## Focus fix (same day)
+Opening a show or album jumped back to the Templar TV tab: the focused tile vanished when the grid swapped, focus fell to the first tab, and tabs select on focus. The breadcrumb title now holds focus while the next level loads, then hands it to the first tile. Owner approved merging PR #18 on 2026-11-26.
+
+## Reasoning behind today's choices
+- Kept the "My" tab names to match the owner's "My Movies".
+- Used plain preferences, not Room, for app order/hidden and Jellyfin settings, so there was no schema migration.
+- Built playback into Templar (media3) because the owner wants the full library without the Jellyfin app. The trade-off is no transcoding yet.
+- Added the phone/PC web page for the key because typing a 32-character key on the remote failed repeatedly.
