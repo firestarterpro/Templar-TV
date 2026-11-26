@@ -2,6 +2,7 @@ package com.firestarterpro.templartv.ui.content
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -76,7 +78,26 @@ fun JellyfinScreen(
     var reload by remember { mutableStateOf(0) }
     var stack by remember { mutableStateOf(listOf<Level>()) }
 
-    BackHandler(enabled = stack.isNotEmpty() && !editing) { stack = stack.dropLast(1) }
+    // Opening a show or album swaps the whole grid. If the focused tile just vanished, Android
+    // moves focus to the first tab ("Templar TV"), and tabs select on focus, so the tab changed.
+    // The title holds focus while the next level loads, then hands it to the first tile.
+    val holder = remember { FocusRequester() }
+    var holding by remember { mutableStateOf(false) }
+    var pending by remember { mutableStateOf<List<Level>?>(null) }
+    fun go(next: List<Level>) {
+        holding = true
+        pending = next
+    }
+    // Runs after the title became focusable: take focus first, then change level.
+    LaunchedEffect(pending) {
+        val next = pending ?: return@LaunchedEffect
+        kotlinx.coroutines.yield()
+        runCatching { holder.requestFocus() }
+        stack = next
+        pending = null
+    }
+
+    BackHandler(enabled = stack.isNotEmpty() && !editing) { go(stack.dropLast(1)) }
 
     LaunchedEffect(reload, stack) {
         if (!config.isConfigured) { state = JfState.NeedsSetup; return@LaunchedEffect }
@@ -87,8 +108,13 @@ fun JellyfinScreen(
             onSuccess = { JfState.Ready(it) },
             onFailure = { JfState.Failed(it.message ?: "Couldn't reach Jellyfin") },
         )
-        // Inside a series or album, put focus on the first tile (not on the top level: that would pull focus off the tabs).
-        if (state is JfState.Ready && stack.isNotEmpty()) { kotlinx.coroutines.delay(50); runCatching { contentFocus.requestFocus() } }
+        // After moving between levels, put focus on the first tile (never on first open of the tab:
+        // that would pull focus off the tabs).
+        if (holding) {
+            kotlinx.coroutines.delay(50)
+            runCatching { contentFocus.requestFocus() }
+            holding = false
+        }
     }
 
     Column(modifier.fillMaxSize().padding(top = 96.dp)) {
@@ -99,7 +125,11 @@ fun JellyfinScreen(
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 48.dp, end = 48.dp, bottom = 8.dp),
+            modifier = Modifier
+                .padding(start = 48.dp, end = 48.dp, bottom = 8.dp)
+                .focusRequester(holder)
+                .focusProperties { canFocus = holding }
+                .focusable(),
         )
         val s = state
         when {
@@ -135,7 +165,7 @@ fun JellyfinScreen(
                                 item, ratio,
                                 Modifier.then(if (index == 0) Modifier.focusRequester(contentFocus) else Modifier),
                             ) {
-                                if (item.isFolder) stack = stack + Level(item.id, item.title)
+                                if (item.isFolder) go(stack + Level(item.id, item.title))
                                 else JellyfinPlayerActivity.play(context, config, if (stack.isEmpty()) listOf(item) else s.items, item)
                             }
                         }
