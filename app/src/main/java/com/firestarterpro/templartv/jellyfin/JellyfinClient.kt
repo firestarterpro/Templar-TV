@@ -61,11 +61,16 @@ object JellyfinClient {
         }
     }
 
+    /** Newer Jellyfin (10.11+) can refuse the legacy X-Emby-Token / api_key forms; this one always works. */
+    fun authHeader(key: String): String =
+        "MediaBrowser Client=\"Templar TV\", Device=\"Google TV Streamer\", DeviceId=\"templar-tv\", Version=\"0.1.0\", Token=\"$key\""
+
     private fun get(url: String, key: String): String {
         val c = URL(url).openConnection() as HttpURLConnection
         try {
             c.connectTimeout = 6_000
             c.readTimeout = 15_000
+            c.setRequestProperty("Authorization", authHeader(key))
             c.setRequestProperty("X-Emby-Token", key)
             c.setRequestProperty("Accept", "application/json")
             val code = c.responseCode

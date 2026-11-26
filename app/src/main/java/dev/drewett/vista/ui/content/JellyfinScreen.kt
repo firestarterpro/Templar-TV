@@ -141,8 +141,13 @@ private fun PosterTile(item: JellyfinItem, ratio: Float, modifier: Modifier, onC
             shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(10.dp)),
             colors = ClickableSurfaceDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         ) {
+            val ctx = LocalContext.current
+            val key = remember { JellyfinConfig(ctx).apiKey }
             AsyncImage(
-                model = item.imageUrl,
+                model = remember(item.imageUrl) {
+                    coil.request.ImageRequest.Builder(ctx).data(item.imageUrl)
+                        .addHeader("Authorization", JellyfinClient.authHeader(key)).build()
+                },
                 contentDescription = item.title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
