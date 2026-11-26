@@ -94,9 +94,18 @@ class BigBoxViewModel(application: Application) : AndroidViewModel(application) 
             runCatching {
                 data.profiles.ensureDefault()
                 if (profileId.value != com.firestarterpro.templartv.data.ProfileIds.DEFAULT) data.rows.ensureDefaults(profileId.value)
+                moveAppsLeftOnce()
             }.onFailure { failed.value = true }
             ready.value = true
         }
+    }
+
+    /** One time only: older installs have the Apps row last (right side); put it first (left side). Later moves stay. */
+    private suspend fun moveAppsLeftOnce() {
+        val prefs = getApplication<Application>().getSharedPreferences("templar_migrations", android.content.Context.MODE_PRIVATE)
+        if (prefs.getBoolean("apps_left_v1", false)) return
+        data.rows.move(profileId.value, com.firestarterpro.templartv.data.layout.DefaultRows.APPS, 0)
+        prefs.edit().putBoolean("apps_left_v1", true).apply()
     }
 
     fun setExternal(input: ExternalInput) {
