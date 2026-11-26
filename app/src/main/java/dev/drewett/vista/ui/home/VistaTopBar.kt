@@ -76,6 +76,7 @@ fun VistaTopBar(
     onOpenQuickSettings: () -> Unit,
     onOpenSearch: () -> Unit,
     modifier: Modifier = Modifier,
+    tabs: List<VistaTab> = VistaTab.entries,
     onOpenGoogleHome: (() -> Unit)? = null,
     barFocusRequester: FocusRequester? = null,
     contentFocus: FocusRequester? = null,
@@ -105,7 +106,7 @@ fun VistaTopBar(
                 },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            SegmentedTabs(selected = selected, onSelect = onSelect, barFocusRequester = barFocusRequester)
+            SegmentedTabs(tabs = tabs, selected = selected, onSelect = onSelect, barFocusRequester = barFocusRequester)
             Box(Modifier.weight(1f))
             Clock()
             Box(Modifier.size(16.dp))
@@ -123,16 +124,16 @@ fun VistaTopBar(
 
 @Composable
 private fun SegmentedTabs(
+    tabs: List<VistaTab>,
     selected: VistaTab,
     onSelect: (VistaTab) -> Unit,
     barFocusRequester: FocusRequester? = null,
 ) {
     val onBg = MaterialTheme.colorScheme.onBackground
     val density = LocalDensity.current
-    val tabs = VistaTab.entries
-    val bounds = remember { mutableStateListOf(*Array(tabs.size) { 0f to 0f }) }
+    val bounds = remember(tabs) { mutableStateListOf(*Array(tabs.size) { 0f to 0f }) }
 
-    val sel = selected.ordinal
+    val sel = tabs.indexOf(selected).coerceAtLeast(0)
     val (targetXpx, targetWpx) = bounds.getOrElse(sel) { 0f to 0f }
     val pillX by animateDpAsState(with(density) { targetXpx.toDp() }, tween(280), label = "pillX")
     val pillW by animateDpAsState(with(density) { targetWpx.toDp() }, tween(280), label = "pillW")

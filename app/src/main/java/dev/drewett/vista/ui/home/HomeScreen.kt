@@ -45,6 +45,10 @@ fun HomeScreen(
     val flags by remember { FeatureFlags.observe(context) }.collectAsStateWithLifecycle(initialValue = emptyMap())
     var bigBoxFailed by remember { mutableStateOf(false) }
     val bigBox = (flags[Flag.BIG_BOX_HOME] ?: Flag.BIG_BOX_HOME.defaultEnabled) && !bigBoxFailed
+    fun on(f: Flag) = flags[f] ?: f.defaultEnabled
+    val libraryTabs = on(Flag.JELLYFIN) && on(Flag.LIBRARY_TABS)
+    val visibleTabs = if (libraryTabs) VistaTab.entries else listOf(VistaTab.FOR_YOU)
+    val moveHide = bigBox && on(Flag.APP_MOVE_HIDE)
     val openGoogleHome = {
         if (!GoogleHomeHandoff.openGoogleHome(context)) {
             Toast.makeText(context, "Hold the Home button on your remote to open the Google Home panel.", Toast.LENGTH_LONG).show()
@@ -72,7 +76,9 @@ fun HomeScreen(
     val favouriteApps = remember(apps, favouritesSet) { apps.filter { it.packageName in favouritesSet } }
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        when (tab) {
+        // A library tab that was just switched off falls back to Templar TV.
+        val shownTab = if (tab in visibleTabs) tab else VistaTab.FOR_YOU
+        when (shownTab) {
             VistaTab.FOR_YOU -> if (bigBox) {
                 BigBoxHome(
                     apps = apps,
@@ -107,8 +113,9 @@ fun HomeScreen(
         }
 
         VistaTopBar(
-            selected = tab,
+            selected = shownTab,
             onSelect = { tab = it },
+            tabs = visibleTabs,
             onOpenQuickSettings = onOpenQuickSettings,
             onOpenSearch = { searchOpen = true },
             onOpenGoogleHome = openGoogleHome,
@@ -135,8 +142,8 @@ fun HomeScreen(
             onToggleFavourite = viewModel::toggleFavourite,
             onAppInfo = viewModel::openAppInfo,
             onUninstall = viewModel::uninstall,
-            onMove = if (bigBox && tab == VistaTab.FOR_YOU) onMoveApp else null,
-            onHide = if (bigBox && tab == VistaTab.FOR_YOU) onHideApp else null,
+            onMove = if (moveHide && tab == VistaTab.FOR_YOU) onMoveApp else null,
+            onHide = if (moveHide && tab == VistaTab.FOR_YOU) onHideApp else null,
         )
     }
 }

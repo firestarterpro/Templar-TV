@@ -42,6 +42,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
+import com.firestarterpro.templartv.FeatureFlags
+import com.firestarterpro.templartv.Flag
 import com.firestarterpro.templartv.companion.CompanionController
 import com.firestarterpro.templartv.jellyfin.JellyfinClient
 import com.firestarterpro.templartv.jellyfin.JellyfinSetupServer
@@ -219,11 +221,13 @@ private fun SetupForm(config: JellyfinConfig, contentFocus: FocusRequester, onDo
             android.os.Handler(android.os.Looper.getMainLooper()).post { onDone() }
         })
     }
-    DisposableEffect(server) {
-        server.start()
+    val ctx = LocalContext.current
+    val webSetup = remember { FeatureFlags.isEnabled(ctx, Flag.JELLYFIN_WEB_SETUP) }
+    DisposableEffect(server, webSetup) {
+        if (webSetup) server.start()
         onDispose { server.stop() }
     }
-    val ip = remember { CompanionController.lanAddresses().firstOrNull() }
+    val ip = remember { if (webSetup) CompanionController.lanAddresses().firstOrNull() else null }
     Column(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 16.dp).width(960.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(
             "Connect to your Jellyfin server. The key is saved on this TV only.",

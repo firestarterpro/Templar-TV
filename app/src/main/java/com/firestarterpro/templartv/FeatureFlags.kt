@@ -62,7 +62,16 @@ enum class Flag(
         "Let paired companion devices read your watch history (read-only). Needs Companion API on.",
         experimental = true,
     ),
-    JELLYFIN("jellyfin", false, "Jellyfin", "Show personal media from your Jellyfin server.", experimental = true),
+    JELLYFIN("jellyfin", true, "Jellyfin", "Show personal media from your Jellyfin server."),
+    LIBRARY_TABS(
+        "library_tabs", true, "My Movies, My Shows, My Music tabs",
+        "Browse and play your Jellyfin library inside Templar TV. Needs Jellyfin on. Off leaves only the Templar TV tab.",
+    ),
+    JELLYFIN_WEB_SETUP(
+        "jellyfin_web_setup", true, "Enter Jellyfin key from phone or PC",
+        "While the Jellyfin setup screen is open, a small page on port 8781 (home network only, code shown on the TV) takes the server and key.",
+    ),
+    APP_MOVE_HIDE("app_move_hide", true, "Move and hide apps", "Move and Hide in the app hold-OK menu. Hidden apps come back from Row Manager."),
     OCR_OBSERVATION("ocr_observation", false, "Screen reading (OCR)", "Opt-in screen text matching for watch history.", experimental = true),
     FOCUSED_TILE_OBSERVATION("focused_tile_observation", false, "Focused tile observation", "Use the focused tile as watch evidence.", experimental = true),
     LOW_CONFIDENCE_REVIEW("low_confidence_review", false, "Review queue", "Send uncertain matches to a review row.", experimental = true),

@@ -33,14 +33,18 @@ class AppLayoutStore(context: Context) {
          * Apps as the Apps row shows them: hidden ones dropped; favourites first unless the owner
          * has saved an order, in which case that order wins and new apps follow it.
          */
-        fun arrange(apps: List<AppEntry>, favourites: Set<String>, order: List<String>, hidden: Set<String>): List<AppEntry> {
-            val (fav, rest) = apps.filter { it.packageName !in hidden }.partition { it.packageName in favourites }
+        fun arrange(apps: List<AppEntry>, favourites: Set<String>, order: List<String>, hidden: Set<String>): List<AppEntry> =
+            arrangeBy(apps, { it.packageName }, favourites, order, hidden)
+
+        /** Same as [arrange] for anything with a package name (kept generic so it is unit-tested). */
+        fun <T> arrangeBy(apps: List<T>, pkg: (T) -> String, favourites: Set<String>, order: List<String>, hidden: Set<String>): List<T> {
+            val (fav, rest) = apps.filter { pkg(it) !in hidden }.partition { pkg(it) in favourites }
             val base = fav + rest
             if (order.isEmpty()) return base
-            val byPkg = base.associateBy { it.packageName }
+            val byPkg = base.associateBy(pkg)
             val listed = order.mapNotNull { byPkg[it] }
-            val listedSet = listed.map { it.packageName }.toSet()
-            return listed + base.filter { it.packageName !in listedSet }
+            val listedSet = listed.map(pkg).toSet()
+            return listed + base.filter { pkg(it) !in listedSet }
         }
     }
 }

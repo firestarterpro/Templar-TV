@@ -33,3 +33,10 @@ Opening a show or album jumped back to the Templar TV tab: the focused tile vani
 - Used plain preferences, not Room, for app order/hidden and Jellyfin settings, so there was no schema migration.
 - Built playback into Templar (media3) because the owner wants the full library without the Jellyfin app. The trade-off is no transcoding yet.
 - Added the phone/PC web page for the key because typing a 32-character key on the remote failed repeatedly.
+
+## Review fixes (same day, later)
+- Player: after the TV sleeps it comes back on the same item and position, paused (no autoplay on wake). Screen-on follows isPlaying only.
+- Jellyfin user: saved user if still enabled, else the first administrator, else the first enabled user. Saved in `templar_jellyfin` prefs.
+- Library lists come from the real libraries of the matching type; libraries named "... (preview)" are skipped, and repeated title+artist/year are shown once.
+- Flags (all default on): `jellyfin` (now default on, no longer experimental), `library_tabs`, `jellyfin_web_setup` (port 8781 page), `app_move_hide`.
+- CI (`.github/workflows/build.yml`) now runs unit tests before the release build. New tests: `JellyfinLogicTest`, `AppLayoutTest`.
