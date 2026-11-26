@@ -102,7 +102,8 @@ fun HomeScreen(
                 )
 
             VistaTab.MOVIES -> JellyfinScreen("My Movies", JellyfinKind.MOVIE, contentFocus)
-            VistaTab.MUSIC -> JellyfinScreen("Music", JellyfinKind.ALBUM, contentFocus)
+            VistaTab.SHOWS -> JellyfinScreen("My Shows", JellyfinKind.SERIES, contentFocus)
+            VistaTab.MUSIC -> JellyfinScreen("My Music", JellyfinKind.ALBUM, contentFocus)
         }
 
         VistaTopBar(

@@ -7,7 +7,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
-import java.net.URLEncoder
 
 /** Where the Jellyfin server is. Stored on this device only (never in git). */
 class JellyfinConfig(context: Context) {
@@ -28,38 +27,79 @@ class JellyfinConfig(context: Context) {
     }
 }
 
-data class JellyfinItem(val id: String, val title: String, val subtitle: String, val imageUrl: String)
+data class JellyfinItem(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val imageUrl: String,
+    /** Jellyfin type: Movie, Series, Season, Episode, MusicAlbum, Audio, ... */
+    val type: String = "",
+    /** True for things that hold other things (series, seasons, albums). */
+    val isFolder: Boolean = false,
+)
 
-enum class JellyfinKind(val itemType: String) { MOVIE("Movie"), ALBUM("MusicAlbum") }
+enum class JellyfinKind(val itemType: String) { MOVIE("Movie"), SERIES("Series"), ALBUM("MusicAlbum") }
 
-/** Minimal read-only Jellyfin client: lists movies or albums with their poster URLs. */
+/** Minimal read-only Jellyfin client: lists the libraries, browses into them, and gives stream URLs. */
 object JellyfinClient {
 
-    suspend fun list(config: JellyfinConfig, kind: JellyfinKind): Result<List<JellyfinItem>> = withContext(Dispatchers.IO) {
+    @Volatile private var cachedUser: Pair<String, String>? = null
+
+    private fun userId(base: String, key: String): String {
+        val tag = "$base|$key"
+        cachedUser?.let { if (it.first == tag) return it.second }
+        val users = JSONArray(get("$base/Users", key))
+        val id = (0 until users.length()).map { users.getJSONObject(it) }
+            .firstOrNull { it.optJSONObject("Policy")?.optBoolean("IsDisabled", false) != true }
+            ?.getString("Id") ?: error("No Jellyfin user found")
+        cachedUser = tag to id
+        return id
+    }
+
+    /** Top level of a tab: every movie, every series or every album. */
+    suspend fun list(config: JellyfinConfig, kind: JellyfinKind): Result<List<JellyfinItem>> =
+        query(config, "IncludeItemTypes=${kind.itemType}&Recursive=true&SortBy=SortName")
+
+    /** What is inside a series (seasons), a season (episodes) or an album (tracks). */
+    suspend fun children(config: JellyfinConfig, parentId: String): Result<List<JellyfinItem>> =
+        query(config, "ParentId=$parentId&SortBy=ParentIndexNumber,IndexNumber,SortName")
+
+    private suspend fun query(config: JellyfinConfig, q: String): Result<List<JellyfinItem>> = withContext(Dispatchers.IO) {
         runCatching {
             val base = config.serverUrl
             val key = config.apiKey
-            val users = JSONArray(get("$base/Users", key))
-            val userId = (0 until users.length()).map { users.getJSONObject(it) }
-                .firstOrNull { it.optJSONObject("Policy")?.optBoolean("IsDisabled", false) != true }
-                ?.getString("Id") ?: error("No Jellyfin user found")
-            val q = "IncludeItemTypes=${kind.itemType}&Recursive=true&SortBy=SortName&Limit=1000&Fields=ProductionYear"
-            val items = JSONObject(get("$base/Users/$userId/Items?$q", key)).getJSONArray("Items")
-            (0 until items.length()).map { items.getJSONObject(it) }.map { o ->
-                val id = o.getString("Id")
-                val sub = when (kind) {
-                    JellyfinKind.MOVIE -> o.optInt("ProductionYear", 0).takeIf { it > 0 }?.toString().orEmpty()
-                    JellyfinKind.ALBUM -> o.optString("AlbumArtist", "")
-                }
-                JellyfinItem(
-                    id = id,
-                    title = o.optString("Name", id),
-                    subtitle = sub,
-                    imageUrl = "$base/Items/$id/Images/Primary?maxWidth=420&api_key=${URLEncoder.encode(key, "UTF-8")}",
-                )
-            }
+            val uid = userId(base, key)
+            val items = JSONObject(get("$base/Users/$uid/Items?$q&Limit=2000&Fields=ProductionYear", key)).getJSONArray("Items")
+            (0 until items.length()).map { items.getJSONObject(it) }.map { o -> o.toItem(base) }
         }
     }
+
+    private fun JSONObject.toItem(base: String): JellyfinItem {
+        val id = getString("Id")
+        val type = optString("Type", "")
+        val index = optInt("IndexNumber", 0)
+        val sub = when (type) {
+            "Movie", "Series" -> optInt("ProductionYear", 0).takeIf { it > 0 }?.toString().orEmpty()
+            "MusicAlbum" -> optString("AlbumArtist", "")
+            "Episode" -> if (index > 0) "Episode $index" else ""
+            "Audio" -> optJSONArray("Artists")?.optString(0).orEmpty()
+            else -> ""
+        }
+        val title = optString("Name", id).let { if (type == "Audio" && index > 0) "$index. $it" else it }
+        return JellyfinItem(
+            id = id,
+            title = title,
+            subtitle = sub,
+            imageUrl = "$base/Items/$id/Images/Primary?maxWidth=420",
+            type = type,
+            isFolder = optBoolean("IsFolder", false),
+        )
+    }
+
+    /** Direct stream of the original file. Needs [authHeader] on the request. */
+    fun streamUrl(config: JellyfinConfig, item: JellyfinItem): String =
+        if (item.type == "Audio") "${config.serverUrl}/Audio/${item.id}/stream?static=true"
+        else "${config.serverUrl}/Videos/${item.id}/stream?static=true"
 
     /** Newer Jellyfin (10.11+) can refuse the legacy X-Emby-Token / api_key forms; this one always works. */
     fun authHeader(key: String): String =

@@ -78,6 +78,12 @@
 
         <!-- Settings -> Features: runtime feature flags -->
         <activity
+            android:name="com.firestarterpro.templartv.jellyfin.JellyfinPlayerActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation"
+            android:theme="@style/Theme.Vista" />
+
+        <activity
             android:name=".FeaturesActivity"
             android:exported="false"
             android:theme="@style/Theme.Vista" />

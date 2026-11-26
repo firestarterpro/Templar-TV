@@ -1,9 +1,6 @@
 package com.firestarterpro.templartv.ui.content
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,8 +46,7 @@ import com.firestarterpro.templartv.jellyfin.JellyfinSetupServer
 import com.firestarterpro.templartv.jellyfin.JellyfinConfig
 import com.firestarterpro.templartv.jellyfin.JellyfinItem
 import com.firestarterpro.templartv.jellyfin.JellyfinKind
-
-private val JELLYFIN_PACKAGES = listOf("org.jellyfin.androidtv", "org.jellyfin.mobile")
+import com.firestarterpro.templartv.jellyfin.JellyfinPlayerActivity
 
 private sealed interface JfState {
     object Loading : JfState
@@ -59,9 +55,12 @@ private sealed interface JfState {
     data class Ready(val items: List<JellyfinItem>) : JfState
 }
 
+/** One level of browsing: a series' seasons, a season's episodes or an album's tracks. */
+private data class Level(val id: String, val title: String)
+
 /**
- * My Movies and Music tabs: posters or album covers from the personal Jellyfin server.
- * Without a server key it shows a setup form instead (key stays on this device, never in git).
+ * My Movies, My Shows and My Music: the personal Jellyfin library, browsed and played inside
+ * Templar TV. Without a server key it shows a setup form (key stays on this device, never in git).
  */
 @Composable
 fun JellyfinScreen(
@@ -75,28 +74,37 @@ fun JellyfinScreen(
     var state by remember { mutableStateOf<JfState>(if (config.isConfigured) JfState.Loading else JfState.NeedsSetup) }
     var editing by remember { mutableStateOf(false) }
     var reload by remember { mutableStateOf(0) }
+    var stack by remember { mutableStateOf(listOf<Level>()) }
 
-    LaunchedEffect(reload) {
+    BackHandler(enabled = stack.isNotEmpty() && !editing) { stack = stack.dropLast(1) }
+
+    LaunchedEffect(reload, stack) {
         if (!config.isConfigured) { state = JfState.NeedsSetup; return@LaunchedEffect }
         state = JfState.Loading
-        state = JellyfinClient.list(config, kind).fold(
+        val level = stack.lastOrNull()
+        val result = if (level == null) JellyfinClient.list(config, kind) else JellyfinClient.children(config, level.id)
+        state = result.fold(
             onSuccess = { JfState.Ready(it) },
             onFailure = { JfState.Failed(it.message ?: "Couldn't reach Jellyfin") },
         )
+        // Inside a series or album, put focus on the first tile (not on the top level: that would pull focus off the tabs).
+        if (state is JfState.Ready && stack.isNotEmpty()) { kotlinx.coroutines.delay(50); runCatching { contentFocus.requestFocus() } }
     }
 
     Column(modifier.fillMaxSize().padding(top = 96.dp)) {
         Text(
-            text = title,
+            text = (listOf(title) + stack.map { it.title }).joinToString("  ›  "),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 48.dp, bottom = 8.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 48.dp, end = 48.dp, bottom = 8.dp),
         )
         val s = state
         when {
             editing || s is JfState.NeedsSetup -> SetupForm(config, contentFocus, onDone = { editing = false; reload++ }, onCancel = if (s is JfState.NeedsSetup) null else ({ editing = false }))
-            s is JfState.Loading -> Centered("Loading from Jellyfin…")
+            s is JfState.Loading -> Centered("Loading…")
             s is JfState.Failed -> Column(Modifier.fillMaxSize().padding(48.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(s.message, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                 Button("Try again", Modifier.focusRequester(contentFocus)) { reload++ }
@@ -105,13 +113,19 @@ fun JellyfinScreen(
             s is JfState.Ready -> {
                 if (s.items.isEmpty()) {
                     Column(Modifier.fillMaxSize().padding(48.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text("Nothing found in this Jellyfin library yet.", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                        Text("Nothing here yet.", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                         Button("Server settings", Modifier.focusRequester(contentFocus)) { editing = true }
                     }
                 } else {
-                    val ratio = if (kind == JellyfinKind.MOVIE) 2f / 3f else 1f
+                    val firstType = s.items.first().type
+                    val ratio = when (firstType) {
+                        "Episode" -> 16f / 9f
+                        "MusicAlbum", "Audio" -> 1f
+                        else -> 2f / 3f
+                    }
+                    val minCell = if (firstType == "Episode") 260.dp else 168.dp
                     LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 168.dp),
+                        columns = GridCells.Adaptive(minSize = minCell),
                         contentPadding = PaddingValues(start = 48.dp, end = 48.dp, top = 12.dp, bottom = 40.dp),
                         horizontalArrangement = Arrangement.spacedBy(20.dp),
                         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -120,9 +134,12 @@ fun JellyfinScreen(
                             PosterTile(
                                 item, ratio,
                                 Modifier.then(if (index == 0) Modifier.focusRequester(contentFocus) else Modifier),
-                            ) { playInJellyfin(context, item) }
+                            ) {
+                                if (item.isFolder) stack = stack + Level(item.id, item.title)
+                                else JellyfinPlayerActivity.play(context, config, if (stack.isEmpty()) listOf(item) else s.items, item)
+                            }
                         }
-                        item(key = "settings") {
+                        if (stack.isEmpty()) item(key = "settings") {
                             Button("Server settings") { editing = true }
                         }
                     }
@@ -245,21 +262,5 @@ private fun Button(label: String, modifier: Modifier = Modifier, onClick: () -> 
 private fun Centered(text: String) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
-    }
-}
-
-/** Opens the Jellyfin app on the item. If the app can't take the link it just opens, and a toast names the title. */
-private fun playInJellyfin(context: Context, item: JellyfinItem) {
-    val pm = context.packageManager
-    val pkg = JELLYFIN_PACKAGES.firstOrNull { pm.getLaunchIntentForPackage(it) != null }
-    if (pkg == null) {
-        Toast.makeText(context, "Jellyfin isn't installed on this TV.", Toast.LENGTH_LONG).show()
-        return
-    }
-    val link = Intent(Intent.ACTION_VIEW, Uri.parse("jellyfin://items/${item.id}")).setPackage(pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    val opened = runCatching { context.startActivity(link) }.isSuccess
-    if (!opened) {
-        context.startActivity(pm.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        Toast.makeText(context, "Opened Jellyfin. Find: ${item.title}", Toast.LENGTH_LONG).show()
     }
 }

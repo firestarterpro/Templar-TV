@@ -18,3 +18,9 @@ PR #15 and #17 merged to main (#11 to #14 closed as folded into #15).
 
 ## Jellyfin key from a phone or PC (same day)
 Typing a 32-character key with the remote was too painful. While the Jellyfin setup form is on screen, Templar now runs a tiny web page (`JellyfinSetupServer`, port 8781, LAN addresses only) and shows `http://<TV IP>:8781` plus a 6-digit code. Open it on any phone or PC, enter the code and key, and the TV saves it and loads the library. The page stops when the form closes, and after 5 wrong codes. The key is stored only in the TV's `templar_jellyfin` preferences.
+
+## Full library inside Templar (same day)
+- Tabs: Templar TV, My Movies, My Shows (new), My Music.
+- Browse in Templar: series → seasons → episodes, album → tracks (Jellyfin `ParentId` queries). Back goes up a level.
+- Play in Templar: `JellyfinPlayerActivity` (media3 ExoPlayer 1.4.1, new dependency). Direct stream of the original file with the key in the `Authorization: MediaBrowser` header (never in the URL). Episodes and tracks queue the rest of the season/album. No transcoding: a file the Streamer can't decode shows the player's error. Resume position and watch-state sync with Jellyfin are not built.
+- The Jellyfin app is no longer opened by Templar.
