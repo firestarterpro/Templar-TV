@@ -73,4 +73,11 @@ class JellyfinLogicTest {
         assertEquals(Triple(3, 61_000L, false), PlayerResume.startPoint(5, 0, Resume(3, 61_000L)))
         assertEquals(Triple(4, 0L, false), PlayerResume.startPoint(5, 0, Resume(9, -5L)))
     }
+
+    @Test fun pagingStopsAtShortPageOrTotal() {
+        assertTrue(JellyfinClient.morePages(500, 500, 1200))
+        assertFalse(JellyfinClient.morePages(500, 1000, 1000))
+        assertFalse(JellyfinClient.morePages(200, 700, -1))
+        assertTrue(JellyfinClient.morePages(500, 500, -1))
+    }
 }

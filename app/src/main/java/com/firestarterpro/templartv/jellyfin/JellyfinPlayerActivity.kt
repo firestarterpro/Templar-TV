@@ -15,8 +15,8 @@ import androidx.media3.ui.PlayerView
 
 /**
  * Plays movies, episodes and songs from the personal Jellyfin server inside Templar TV, so the
- * Jellyfin app is not needed. Plays the original file (direct stream); a file the Streamer can't
- * decode shows the player's error. The key is sent as a header, never put in the URL.
+ * Jellyfin app is not needed. Plays the original file (direct stream, no transcoding yet: a file whose
+ * only audio is DTS or TrueHD probably plays silent). The key is sent as a header, never put in the URL.
  * After the TV sleeps it comes back on the same item and position, paused.
  */
 @androidx.annotation.OptIn(UnstableApi::class)

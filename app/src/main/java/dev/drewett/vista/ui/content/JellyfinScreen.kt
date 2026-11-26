@@ -34,6 +34,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -211,11 +213,11 @@ private fun PosterTile(item: JellyfinItem, ratio: Float, modifier: Modifier, onC
 
 @Composable
 private fun SetupForm(config: JellyfinConfig, contentFocus: FocusRequester, onDone: () -> Unit, onCancel: (() -> Unit)?) {
-    var url by remember { mutableStateOf(config.serverUrl.ifEmpty { JellyfinConfig.DEFAULT_URL }) }
+    var url by remember { mutableStateOf(config.serverUrl) }
     var key by remember { mutableStateOf(config.apiKey) }
     // Easier than the remote: a small web page on the LAN, open only while this form shows.
     val server = remember {
-        JellyfinSetupServer(JellyfinConfig.DEFAULT_URL, onSave = { u, k ->
+        JellyfinSetupServer(config.serverUrl, onSave = { u, k ->
             config.serverUrl = u
             config.apiKey = k
             android.os.Handler(android.os.Looper.getMainLooper()).post { onDone() }
@@ -242,8 +244,8 @@ private fun SetupForm(config: JellyfinConfig, contentFocus: FocusRequester, onDo
             )
             Text("Or type them here with the remote:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
         }
-        Field("Server address", url, { url = it }, Modifier.focusRequester(contentFocus))
-        Field("API key (Jellyfin dashboard > API Keys)", key, { key = it })
+        Field("Server address, for example ${JellyfinConfig.URL_HINT}", url, { url = it }, Modifier.focusRequester(contentFocus))
+        Field("API key (Jellyfin dashboard > API Keys)", key, { key = it }, secret = true)
         Button("Save and load") {
             config.serverUrl = url
             config.apiKey = key
@@ -254,7 +256,7 @@ private fun SetupForm(config: JellyfinConfig, contentFocus: FocusRequester, onDo
 }
 
 @Composable
-private fun Field(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun Field(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier, secret: Boolean = false) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
         Box(
@@ -267,6 +269,8 @@ private fun Field(label: String, value: String, onChange: (String) -> Unit, modi
                 value = value,
                 onValueChange = onChange,
                 singleLine = true,
+                // The key is masked on screen so it isn't shown to the room.
+                visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
                 textStyle = TextStyle(fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 modifier = modifier.fillMaxWidth(),

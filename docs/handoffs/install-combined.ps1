@@ -2,7 +2,7 @@
     # Templar TV combined build installer (2026-11-25). Windows PowerShell 5.1. Targets ONLY the Streamer.
     # Everything printed below is also copied to the clipboard when the script ends.
     $adb      = 'C:\Android\Sdk\platform-tools\adb.exe'
-    $dev      = '192.168.0.166:5555'
+    $dev      = if ($env:TEMPLAR_STREAMER) { $env:TEMPLAR_STREAMER } else { Read-Host 'Streamer adb address (ip:5555)' }
     $pkg      = 'com.firestarterpro.templartv'
     $listener = 'com.firestarterpro.templartv/com.firestarterpro.templartv.service.VistaNotificationListenerService'
     $apk      = 'C:\Templar Archives\Robotics Facility\Templar-TV-combine\app\build\outputs\apk\release\app-release.apk'

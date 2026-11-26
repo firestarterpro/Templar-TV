@@ -16,8 +16,9 @@ Vista is built around three goals:
   use, dark at night.
 - **Relevant content.** Continue Watching, per-app content rows, and a Movies/Shows library are read
   directly from the device's TV provider, with no recommendation feed and no advertising.
-- **No external dependencies.** Vista reads only local state. It requires no account and sends
-  nothing off the device.
+- **No accounts, no tracking.** Templar TV needs no account and sends no analytics. It talks to the
+  network only to load poster art, to reach your own Jellyfin server on your home network, and, when
+  you turn them on, to serve the LAN-only companion and Jellyfin key-setup pages.
 
 Targets API 34 and runs on a 1 GB-RAM Google TV stick.
 

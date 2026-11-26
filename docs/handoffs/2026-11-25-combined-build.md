@@ -66,17 +66,17 @@ Leftover on devices (harmless): old SharedPreferences `star_key_capture` / `star
 
 ## 5. Install
 
-Run `docs/handoffs/install-combined.ps1` (one `& { }` block, Windows PowerShell 5.1). It connects to `192.168.0.166:5555`,
-uses `-s 192.168.0.166:5555` on every command (the tablet is also connected), checks the SHA-256 before installing,
+Run `docs/handoffs/install-combined.ps1` (one `& { }` block, Windows PowerShell 5.1). It connects to `<streamer-ip>:5555`,
+uses `-s <streamer-ip>:5555` on every command (the tablet is also connected), checks the SHA-256 before installing,
 runs `install -r`, enables the notification listener
 `com.firestarterpro.templartv/com.firestarterpro.templartv.service.VistaNotificationListenerService`, prints the
 SHA-256 and rollback lines, and copies all output to the clipboard. It does not change HOME, Google's launcher or any other setting.
 
 ## 6. Rollback
 
-- Previous Templar build: `adb -s 192.168.0.166:5555 install -r "...\Templar-TV-combine\rollback\templar-before-combined.apk"`.
-- Remove Templar: `adb -s 192.168.0.166:5555 uninstall com.firestarterpro.templartv` (HOME falls back to Google).
-- Listener off: `adb -s 192.168.0.166:5555 shell cmd notification disallow_listener <component above>`.
+- Previous Templar build: `adb -s <streamer-ip>:5555 install -r "...\Templar-TV-combine\rollback\templar-before-combined.apk"`.
+- Remove Templar: `adb -s <streamer-ip>:5555 uninstall com.firestarterpro.templartv` (HOME falls back to Google).
+- Listener off: `adb -s <streamer-ip>:5555 shell cmd notification disallow_listener <component above>`.
 - HOME role is reassignable: Settings → Apps → Default apps → Home app → Google TV, or `cmd role remove-role-holder android.app.role.HOME com.firestarterpro.templartv`.
 - Google's launcher (`com.google.android.apps.tv.launcherx`) is untouched. Every new behaviour is behind a flag in Settings → Features.
 
