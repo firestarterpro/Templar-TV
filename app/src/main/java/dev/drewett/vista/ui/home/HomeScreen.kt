@@ -24,8 +24,8 @@ import com.firestarterpro.templartv.google.GoogleHomeHandoff
 import com.firestarterpro.templartv.home.BigBoxHome
 import com.firestarterpro.templartv.ui.VistaSignals
 import com.firestarterpro.templartv.ui.components.AppContextMenu
-import com.firestarterpro.templartv.ui.content.ContentGrid
-import com.firestarterpro.templartv.ui.content.MusicScreen
+import com.firestarterpro.templartv.jellyfin.JellyfinKind
+import com.firestarterpro.templartv.ui.content.JellyfinScreen
 import com.firestarterpro.templartv.ui.content.SearchScreen
 
 @Composable
@@ -101,8 +101,8 @@ fun HomeScreen(
                     resetSignal = resetSignal,
                 )
 
-            VistaTab.MOVIES -> ContentGrid("My Movies", movies, viewModel::launchContent, contentFocus = contentFocus)
-            VistaTab.MUSIC -> MusicScreen(contentFocus = contentFocus)
+            VistaTab.MOVIES -> JellyfinScreen("My Movies", JellyfinKind.MOVIE, contentFocus)
+            VistaTab.MUSIC -> JellyfinScreen("Music", JellyfinKind.ALBUM, contentFocus)
         }
 
         VistaTopBar(

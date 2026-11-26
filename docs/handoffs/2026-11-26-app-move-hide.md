@@ -8,3 +8,10 @@ PR #15 and #17 merged to main (#11 to #14 closed as folded into #15).
 - **Unhide**: Row Manager shows "Show N hidden apps" when any are hidden.
 - Storage: plain preferences `templar_app_layout` (order, hidden) via `AppLayoutStore`; no database change. Clearing the app's data or "Show hidden apps" restores defaults. A saved order wins over the favourites-first default.
 - Not compiled/tested in the cloud (no Android SDK); the PC build is the first compile.
+
+## Jellyfin tabs (same day)
+- **My Movies** and **Music** now list movies and albums from Jellyfin (`JellyfinClient`, `JellyfinScreen`), with posters/covers. Default server `http://192.168.0.150:8096`.
+- Server address and API key are entered in the tab (setup form, "Server settings" tile at the end of the grid) and stored in preferences `templar_jellyfin` on the TV only. Never in git. No key: the tab shows the setup form. Server down or key rejected: it shows the error with Try again.
+- Select opens the Jellyfin app. It first tries a `jellyfin://items/ID` link; if the app can't take it, it just opens Jellyfin and a toast names the title. The deep link is untested.
+- Manifest now allows cleartext HTTP (`usesCleartextTraffic`) because the LAN server is plain HTTP.
+- Not compiled/tested in the cloud. TV series are not listed yet (Movie and MusicAlbum only).
