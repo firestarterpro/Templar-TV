@@ -1,9 +1,7 @@
 name: Build APK
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  # Manual only (GitHub and CI: sync only rule, 2026-11-28).
   workflow_dispatch:
 
 jobs:
